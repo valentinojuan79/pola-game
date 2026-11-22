@@ -1,0 +1,18 @@
+{
+  "name": "Pola",
+  "short_name": "Pola",
+  "description": "Daily & Unlimited Logic Puzzles crafted with tactile precision.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F5F7",
+  "theme_color": "#F5F5F7",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
