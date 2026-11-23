@@ -2,6 +2,11 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+  --font-outfit: "Outfit";
+  --font-plus-jakarta: "Plus Jakarta Sans";
+}
+
 @theme inline {
   --font-sans: var(--font-plus-jakarta), -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
   --font-display: var(--font-outfit), var(--font-plus-jakarta), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
