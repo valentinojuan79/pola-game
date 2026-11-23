@@ -27,12 +27,41 @@ import {
   tryStepToCell,
   undoZipMove,
 } from "@/lib/games/zip/engine";
-import type { ZipBoardState, ZipPuzzle } from "@/lib/games/zip/types";
+import type { ZipBoardState, ZipCoord, ZipPuzzle } from "@/lib/games/zip/types";
+import {
+  markTutorialSeen,
+  setSkipAllTutorials,
+  shouldAutoShowTutorial,
+  type DailyCompletion,
+} from "@/lib/storage";
 import type { PolaUser } from "@/lib/supabase";
+import { DailyReviewBar } from "@/components/games/shared/DailyReviewBar";
+import { TutorialModalFooter } from "@/components/games/shared/TutorialModalFooter";
 import { WinModal } from "@/components/games/queens/WinModal";
 import { ZipBoard } from "./ZipBoard";
 
 const HINT_COOLDOWN_SECONDS = 15;
+
+function buildZipReviewState(
+  puzzle: ZipPuzzle,
+  snapshot: unknown
+): ZipBoardState {
+  const total = puzzle.size * puzzle.size;
+  if (
+    Array.isArray(snapshot) &&
+    snapshot.length === total &&
+    snapshot.every((pt) => Array.isArray(pt) && pt.length === 2)
+  ) {
+    return {
+      path: (snapshot as ZipCoord[]).map(([r, c]) => [r, c]),
+      history: [],
+    };
+  }
+  return {
+    path: puzzle.solutionPath.map(([r, c]) => [r, c]),
+    history: [],
+  };
+}
 
 interface ZipGameProps {
   puzzle: ZipPuzzle;
@@ -41,10 +70,12 @@ interface ZipGameProps {
   streak: number;
   user: PolaUser | null;
   dailyRank: number | null;
+  reviewCompletion?: DailyCompletion | null;
   onComplete: (result: {
     elapsedSeconds: number;
     penaltySeconds: number;
     hintsUsed: number;
+    boardSnapshot?: unknown;
   }) => void;
   onExit: () => void;
   onPlayUnlimitedNext: () => void;
@@ -58,24 +89,33 @@ export function ZipGame({
   streak,
   user,
   dailyRank,
+  reviewCompletion = null,
   onComplete,
   onExit,
   onPlayUnlimitedNext,
   onOpenAuth,
 }: ZipGameProps) {
   const { t } = useI18n();
+  const isReviewMode = Boolean(reviewCompletion);
 
   const [board, setBoard] = useState<ZipBoardState>(() =>
-    createInitialZipState(puzzle)
+    reviewCompletion
+      ? buildZipReviewState(puzzle, reviewCompletion.boardSnapshot)
+      : createInitialZipState(puzzle)
   );
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [hintsUsed, setHintsUsed] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(
+    reviewCompletion ? reviewCompletion.totalSeconds : 0
+  );
+  const [hintsUsed, setHintsUsed] = useState(
+    reviewCompletion ? reviewCompletion.hintsUsed : 0
+  );
   const [hintCooldown, setHintCooldown] = useState(0);
   const [popCounters, setPopCounters] = useState<Record<number, number>>({});
   const [showRules, setShowRules] = useState(false);
+  const [isAutoTutorial, setIsAutoTutorial] = useState(false);
   const [hasWon, setHasWon] = useState(false);
 
-  const completedRef = useRef(false);
+  const completedRef = useRef(isReviewMode);
   const lastWarnTimeRef = useRef(0);
   const boardRef = useRef<ZipBoardState>(board);
   boardRef.current = board;
@@ -86,8 +126,20 @@ export function ZipGame({
     [puzzle.waypoints]
   );
 
-  // Reset cleanly whenever puzzle.id changes
+  // Reset cleanly whenever puzzle.id or reviewCompletion changes
   useEffect(() => {
+    if (reviewCompletion) {
+      setBoard(buildZipReviewState(puzzle, reviewCompletion.boardSnapshot));
+      setElapsedSeconds(reviewCompletion.totalSeconds);
+      setHintsUsed(reviewCompletion.hintsUsed);
+      setHintCooldown(0);
+      setPopCounters({});
+      setHasWon(false);
+      setShowRules(false);
+      setIsAutoTutorial(false);
+      completedRef.current = true;
+      return;
+    }
     setBoard(createInitialZipState(puzzle));
     setElapsedSeconds(0);
     setHintsUsed(0);
@@ -95,25 +147,29 @@ export function ZipGame({
     setPopCounters({});
     setHasWon(false);
     completedRef.current = false;
-  }, [puzzle]);
+    if (shouldAutoShowTutorial("zip")) {
+      setIsAutoTutorial(true);
+      setShowRules(true);
+    }
+  }, [puzzle, reviewCompletion]);
 
-  // Live timer (pauses when solved or rules open)
+  // Live timer (pauses when solved, review mode, or rules open)
   useEffect(() => {
-    if (hasWon || showRules) return;
+    if (hasWon || showRules || isReviewMode) return;
     const interval = setInterval(() => {
       setElapsedSeconds((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [hasWon, showRules]);
+  }, [hasWon, showRules, isReviewMode]);
 
   // 15-second Hint cooldown countdown
   useEffect(() => {
-    if (hintCooldown <= 0 || hasWon) return;
+    if (hintCooldown <= 0 || hasWon || isReviewMode) return;
     const timer = setInterval(() => {
       setHintCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
     return () => clearInterval(timer);
-  }, [hintCooldown, hasWon]);
+  }, [hintCooldown, hasWon, isReviewMode]);
 
   const solved = useMemo(
     () => isZipSolved(board.path, puzzle),
@@ -122,7 +178,7 @@ export function ZipGame({
 
   // Detect puzzle completion
   useEffect(() => {
-    if (solved && !completedRef.current) {
+    if (solved && !completedRef.current && !isReviewMode) {
       completedRef.current = true;
       setHasWon(true);
       feedback.chime();
@@ -130,9 +186,25 @@ export function ZipGame({
         elapsedSeconds,
         penaltySeconds: 0,
         hintsUsed,
+        boardSnapshot: board.path,
       });
     }
-  }, [solved, elapsedSeconds, hintsUsed, onComplete]);
+  }, [solved, isReviewMode, elapsedSeconds, hintsUsed, board.path, onComplete]);
+
+  const handleCloseRules = useCallback(() => {
+    if (isAutoTutorial) {
+      markTutorialSeen("zip");
+      setIsAutoTutorial(false);
+    }
+    setShowRules(false);
+  }, [isAutoTutorial]);
+
+  const handleSkipAllTutorials = useCallback(() => {
+    markTutorialSeen("zip");
+    setSkipAllTutorials(true);
+    setIsAutoTutorial(false);
+    setShowRules(false);
+  }, []);
 
   const triggerNodePop = useCallback((waypointNum: number) => {
     setPopCounters((prev) => ({
@@ -307,6 +379,7 @@ export function ZipGame({
           type="button"
           onClick={() => {
             feedback.click();
+            setIsAutoTutorial(false);
             setShowRules(true);
           }}
           aria-label={t.zip.howToPlay}
@@ -323,7 +396,7 @@ export function ZipGame({
           path={board.path}
           waypointMap={waypointMap}
           popCounters={popCounters}
-          disabled={hasWon}
+          disabled={hasWon || isReviewMode}
           onDragStart={handleDragStart}
           onStepToCell={handleStepToCell}
           onTrimToCell={handleTrimToCell}
@@ -340,40 +413,49 @@ export function ZipGame({
         </div>
       </div>
 
-      {/* Tactile Bottom Controls Bar: Undo, Hint (15s cooldown), Reset */}
-      <div className="mt-4 grid grid-cols-3 gap-2.5">
-        <button
-          type="button"
-          onClick={handleUndo}
-          disabled={board.history.length === 0 || hasWon}
-          className="glass-card flex flex-col items-center justify-center gap-1 rounded-[20px] py-3 text-[11px] font-medium text-neutral-800 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-200"
-        >
-          <Undo2 className="h-[18px] w-[18px]" />
-          <span>{t.zip.undo}</span>
-        </button>
+      {/* Tactile Bottom Controls Bar or Solved Daily Review Bar */}
+      {isReviewMode ? (
+        <DailyReviewBar
+          game="zip"
+          shareText={shareText}
+          onPlayUnlimited={onPlayUnlimitedNext}
+          onBackHome={onExit}
+        />
+      ) : (
+        <div className="mt-4 grid grid-cols-3 gap-2.5">
+          <button
+            type="button"
+            onClick={handleUndo}
+            disabled={board.history.length === 0 || hasWon}
+            className="glass-card flex flex-col items-center justify-center gap-1 rounded-[20px] py-3 text-[11px] font-medium text-neutral-800 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-200"
+          >
+            <Undo2 className="h-[18px] w-[18px]" />
+            <span>{t.zip.undo}</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={handleHint}
-          disabled={hasWon || hintCooldown > 0}
-          className="glass-card relative flex flex-col items-center justify-center gap-1 overflow-hidden rounded-[20px] py-3 text-[11px] font-medium text-sky-700 transition-transform active:scale-95 disabled:opacity-50 dark:text-sky-300"
-        >
-          <Lightbulb className="h-[18px] w-[18px]" />
-          <span className="tabular-nums">
-            {hintCooldown > 0 ? `${hintCooldown}s` : t.zip.hint}
-          </span>
-        </button>
+          <button
+            type="button"
+            onClick={handleHint}
+            disabled={hasWon || hintCooldown > 0}
+            className="glass-card relative flex flex-col items-center justify-center gap-1 overflow-hidden rounded-[20px] py-3 text-[11px] font-medium text-sky-700 transition-transform active:scale-95 disabled:opacity-50 dark:text-sky-300"
+          >
+            <Lightbulb className="h-[18px] w-[18px]" />
+            <span className="tabular-nums">
+              {hintCooldown > 0 ? `${hintCooldown}s` : t.zip.hint}
+            </span>
+          </button>
 
-        <button
-          type="button"
-          onClick={handleReset}
-          disabled={hasWon || board.path.length <= 1}
-          className="glass-card flex flex-col items-center justify-center gap-1 rounded-[20px] py-3 text-[11px] font-medium text-neutral-700 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-300"
-        >
-          <RotateCcw className="h-[18px] w-[18px]" />
-          <span>{t.zip.reset}</span>
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={hasWon || board.path.length <= 1}
+            className="glass-card flex flex-col items-center justify-center gap-1 rounded-[20px] py-3 text-[11px] font-medium text-neutral-700 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-300"
+          >
+            <RotateCcw className="h-[18px] w-[18px]" />
+            <span>{t.zip.reset}</span>
+          </button>
+        </div>
+      )}
 
       {/* How to Play Glass Sheet */}
       <AnimatePresence>
@@ -383,7 +465,7 @@ export function ZipGame({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setShowRules(false)}
+              onClick={handleCloseRules}
               className="absolute inset-0 bg-black/35 backdrop-blur-xs dark:bg-black/60"
             />
             <motion.div
@@ -397,7 +479,7 @@ export function ZipGame({
                 type="button"
                 onClick={() => {
                   feedback.click();
-                  setShowRules(false);
+                  handleCloseRules();
                 }}
                 aria-label="Close"
                 className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.05] text-neutral-600 dark:bg-white/[0.08] dark:text-neutral-300"
@@ -415,16 +497,13 @@ export function ZipGame({
                 <li>• {t.zip.rule4}</li>
               </ul>
 
-              <button
-                type="button"
-                onClick={() => {
-                  feedback.click();
-                  setShowRules(false);
-                }}
-                className="mt-5 w-full rounded-2xl bg-[#0369A1] py-3 text-[14px] font-semibold text-white shadow-[0_4px_14px_-4px_rgba(3,105,161,0.28)] transition-colors hover:bg-[#075985] active:scale-[0.98] dark:bg-sky-400/90 dark:text-neutral-950"
-              >
-                {t.zip.gotIt}
-              </button>
+              <TutorialModalFooter
+                isAutoTutorial={isAutoTutorial}
+                manualLabel={t.zip.gotIt}
+                accentButtonClass="bg-[#0369A1] text-white shadow-[0_4px_14px_-4px_rgba(3,105,161,0.28)] hover:bg-[#075985] dark:bg-sky-400/90 dark:text-neutral-950"
+                onDismiss={handleCloseRules}
+                onSkipAll={handleSkipAllTutorials}
+              />
             </motion.div>
           </div>
         )}

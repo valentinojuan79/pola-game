@@ -15,7 +15,11 @@ import { useI18n } from "@/lib/i18n";
 import { feedback } from "@/lib/feedback";
 import {
   loadAutoXPreference,
+  markTutorialSeen,
   saveAutoXPreference,
+  setSkipAllTutorials,
+  shouldAutoShowTutorial,
+  type DailyCompletion,
 } from "@/lib/storage";
 import {
   applyDragX,
@@ -29,10 +33,50 @@ import {
   undoMove,
   validateBoard,
 } from "@/lib/games/queens/engine";
-import type { QueensBoardState, QueensPuzzle } from "@/lib/games/queens/types";
+import type {
+  CellState,
+  QueensBoardState,
+  QueensPuzzle,
+} from "@/lib/games/queens/types";
 import type { PolaUser } from "@/lib/supabase";
+import { DailyReviewBar } from "@/components/games/shared/DailyReviewBar";
+import { TutorialModalFooter } from "@/components/games/shared/TutorialModalFooter";
 import { QueensBoard } from "./QueensBoard";
 import { WinModal } from "./WinModal";
+
+function buildQueensReviewState(
+  puzzle: QueensPuzzle,
+  snapshot: unknown
+): QueensBoardState {
+  const n = puzzle.size;
+  const falseGrid = () =>
+    Array.from({ length: n }, () => Array<boolean>(n).fill(false));
+
+  if (
+    Array.isArray(snapshot) &&
+    snapshot.length === n &&
+    snapshot.every((row) => Array.isArray(row) && row.length === n)
+  ) {
+    return {
+      cells: (snapshot as CellState[][]).map((row) => [...row]),
+      autoXMask: falseGrid(),
+      lockedCrowns: falseGrid(),
+      history: [],
+    };
+  }
+  const cells: CellState[][] = Array.from({ length: n }, () =>
+    Array<CellState>(n).fill("empty")
+  );
+  for (const [r, c] of puzzle.solution) {
+    if (r >= 0 && r < n && c >= 0 && c < n) cells[r][c] = "crown";
+  }
+  return {
+    cells,
+    autoXMask: falseGrid(),
+    lockedCrowns: falseGrid(),
+    history: [],
+  };
+}
 
 interface QueensGameProps {
   puzzle: QueensPuzzle;
@@ -41,10 +85,12 @@ interface QueensGameProps {
   streak: number;
   user: PolaUser | null;
   dailyRank: number | null;
+  reviewCompletion?: DailyCompletion | null;
   onComplete: (result: {
     elapsedSeconds: number;
     penaltySeconds: number;
     hintsUsed: number;
+    boardSnapshot?: unknown;
   }) => void;
   onExit: () => void;
   onPlayUnlimitedNext: () => void;
@@ -58,49 +104,75 @@ export function QueensGame({
   streak,
   user,
   dailyRank,
+  reviewCompletion = null,
   onComplete,
   onExit,
   onPlayUnlimitedNext,
   onOpenAuth,
 }: QueensGameProps) {
   const { t } = useI18n();
+  const isReviewMode = Boolean(reviewCompletion);
 
   const [board, setBoard] = useState<QueensBoardState>(() =>
-    createInitialBoardState(puzzle.size)
+    reviewCompletion
+      ? buildQueensReviewState(puzzle, reviewCompletion.boardSnapshot)
+      : createInitialBoardState(puzzle.size)
   );
   const [autoX, setAutoX] = useState<boolean>(true);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [penaltySeconds, setPenaltySeconds] = useState(0);
-  const [hintsUsed, setHintsUsed] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(
+    reviewCompletion ? reviewCompletion.elapsedSeconds : 0
+  );
+  const [penaltySeconds, setPenaltySeconds] = useState(
+    reviewCompletion ? reviewCompletion.penaltySeconds : 0
+  );
+  const [hintsUsed, setHintsUsed] = useState(
+    reviewCompletion ? reviewCompletion.hintsUsed : 0
+  );
   const [penaltyBurstKey, setPenaltyBurstKey] = useState(0);
   const [showRules, setShowRules] = useState(false);
+  const [isAutoTutorial, setIsAutoTutorial] = useState(false);
   const [hasWon, setHasWon] = useState(false);
 
-  const completedRef = useRef(false);
+  const completedRef = useRef(isReviewMode);
 
   // Sync Auto-X preference on mount
   useEffect(() => {
     setAutoX(loadAutoXPreference());
   }, []);
 
-  // Reset board cleanly whenever puzzle.id changes (e.g., Next Unlimited Puzzle)
+  // Reset board cleanly whenever puzzle.id or reviewCompletion changes
   useEffect(() => {
+    if (reviewCompletion) {
+      setBoard(buildQueensReviewState(puzzle, reviewCompletion.boardSnapshot));
+      setElapsedSeconds(reviewCompletion.elapsedSeconds);
+      setPenaltySeconds(reviewCompletion.penaltySeconds);
+      setHintsUsed(reviewCompletion.hintsUsed);
+      setHasWon(false);
+      setShowRules(false);
+      setIsAutoTutorial(false);
+      completedRef.current = true;
+      return;
+    }
     setBoard(createInitialBoardState(puzzle.size));
     setElapsedSeconds(0);
     setPenaltySeconds(0);
     setHintsUsed(0);
     setHasWon(false);
     completedRef.current = false;
-  }, [puzzle.id, puzzle.size]);
+    if (shouldAutoShowTutorial("queens")) {
+      setIsAutoTutorial(true);
+      setShowRules(true);
+    }
+  }, [puzzle, reviewCompletion]);
 
-  // Live timer (pauses when solved or rules open)
+  // Live timer (pauses when solved, review mode, or rules open)
   useEffect(() => {
-    if (hasWon || showRules) return;
+    if (hasWon || showRules || isReviewMode) return;
     const interval = setInterval(() => {
       setElapsedSeconds((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [hasWon, showRules]);
+  }, [hasWon, showRules, isReviewMode]);
 
   const validation = useMemo(
     () => validateBoard(puzzle, board.cells),
@@ -109,7 +181,7 @@ export function QueensGame({
 
   // Detect puzzle completion
   useEffect(() => {
-    if (validation.isSolved && !completedRef.current) {
+    if (validation.isSolved && !completedRef.current && !isReviewMode) {
       completedRef.current = true;
       setHasWon(true);
       feedback.chime();
@@ -117,17 +189,37 @@ export function QueensGame({
         elapsedSeconds,
         penaltySeconds,
         hintsUsed,
+        boardSnapshot: board.cells,
       });
     }
   }, [
     validation.isSolved,
+    isReviewMode,
     elapsedSeconds,
     penaltySeconds,
     hintsUsed,
+    board.cells,
     onComplete,
   ]);
 
-  const totalSeconds = elapsedSeconds + penaltySeconds;
+  const totalSeconds = reviewCompletion
+    ? reviewCompletion.totalSeconds
+    : elapsedSeconds + penaltySeconds;
+
+  const handleCloseRules = useCallback(() => {
+    if (isAutoTutorial) {
+      markTutorialSeen("queens");
+      setIsAutoTutorial(false);
+    }
+    setShowRules(false);
+  }, [isAutoTutorial]);
+
+  const handleSkipAllTutorials = useCallback(() => {
+    markTutorialSeen("queens");
+    setSkipAllTutorials(true);
+    setIsAutoTutorial(false);
+    setShowRules(false);
+  }, []);
 
   const handleTapCell = useCallback(
     (row: number, col: number) => {
@@ -268,6 +360,7 @@ export function QueensGame({
           type="button"
           onClick={() => {
             feedback.click();
+            setIsAutoTutorial(false);
             setShowRules(true);
           }}
           aria-label={t.queens.howToPlay}
@@ -283,7 +376,7 @@ export function QueensGame({
           puzzle={puzzle}
           board={board}
           validation={validation}
-          disabled={hasWon}
+          disabled={hasWon || isReviewMode}
           onTapCell={handleTapCell}
           onDragStart={handleDragStart}
           onDragCell={handleDragCell}
@@ -302,51 +395,60 @@ export function QueensGame({
         </div>
       </div>
 
-      {/* Tactile Controls Bar */}
-      <div className="mt-4 grid grid-cols-4 gap-2">
-        <button
-          type="button"
-          onClick={handleUndo}
-          disabled={board.history.length === 0 || hasWon}
-          className="glass-card flex flex-col items-center justify-center gap-1 rounded-[20px] py-3 text-[11px] font-medium text-neutral-800 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-200"
-        >
-          <Undo2 className="h-[18px] w-[18px]" />
-          <span>{t.queens.undo}</span>
-        </button>
+      {/* Tactile Controls Bar or Solved Daily Review Bar */}
+      {isReviewMode ? (
+        <DailyReviewBar
+          game="queens"
+          shareText={shareText}
+          onPlayUnlimited={onPlayUnlimitedNext}
+          onBackHome={onExit}
+        />
+      ) : (
+        <div className="mt-4 grid grid-cols-4 gap-2">
+          <button
+            type="button"
+            onClick={handleUndo}
+            disabled={board.history.length === 0 || hasWon}
+            className="glass-card flex flex-col items-center justify-center gap-1 rounded-[20px] py-3 text-[11px] font-medium text-neutral-800 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-200"
+          >
+            <Undo2 className="h-[18px] w-[18px]" />
+            <span>{t.queens.undo}</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={handleToggleAutoX}
-          className={`flex flex-col items-center justify-center gap-1 rounded-[20px] border py-3 text-[11px] font-medium transition-all active:scale-95 ${
-            autoX
-              ? "border-amber-500/45 bg-amber-500/[0.14] text-amber-950 dark:border-amber-400/40 dark:bg-amber-400/[0.18] dark:text-amber-100"
-              : "glass-card text-neutral-700 dark:text-neutral-300"
-          }`}
-        >
-          <Sparkles className="h-[18px] w-[18px]" />
-          <span>{t.queens.autoX}</span>
-        </button>
+          <button
+            type="button"
+            onClick={handleToggleAutoX}
+            className={`flex flex-col items-center justify-center gap-1 rounded-[20px] border py-3 text-[11px] font-medium transition-all active:scale-95 ${
+              autoX
+                ? "border-amber-500/45 bg-amber-500/[0.14] text-amber-950 dark:border-amber-400/40 dark:bg-amber-400/[0.18] dark:text-amber-100"
+                : "glass-card text-neutral-700 dark:text-neutral-300"
+            }`}
+          >
+            <Sparkles className="h-[18px] w-[18px]" />
+            <span>{t.queens.autoX}</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={handleHint}
-          disabled={hasWon}
-          className="glass-card flex flex-col items-center justify-center gap-1 rounded-[20px] py-3 text-[11px] font-medium text-amber-700 transition-transform active:scale-95 disabled:opacity-40 dark:text-amber-300"
-        >
-          <Lightbulb className="h-[18px] w-[18px]" />
-          <span>{t.queens.hint}</span>
-        </button>
+          <button
+            type="button"
+            onClick={handleHint}
+            disabled={hasWon}
+            className="glass-card flex flex-col items-center justify-center gap-1 rounded-[20px] py-3 text-[11px] font-medium text-amber-700 transition-transform active:scale-95 disabled:opacity-40 dark:text-amber-300"
+          >
+            <Lightbulb className="h-[18px] w-[18px]" />
+            <span>{t.queens.hint}</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={handleReset}
-          disabled={hasWon}
-          className="glass-card flex flex-col items-center justify-center gap-1 rounded-[20px] py-3 text-[11px] font-medium text-neutral-700 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-300"
-        >
-          <RotateCcw className="h-[18px] w-[18px]" />
-          <span>{t.queens.reset}</span>
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={hasWon}
+            className="glass-card flex flex-col items-center justify-center gap-1 rounded-[20px] py-3 text-[11px] font-medium text-neutral-700 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-300"
+          >
+            <RotateCcw className="h-[18px] w-[18px]" />
+            <span>{t.queens.reset}</span>
+          </button>
+        </div>
+      )}
 
       {/* How to Play Glass Sheet */}
       <AnimatePresence>
@@ -356,7 +458,7 @@ export function QueensGame({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setShowRules(false)}
+              onClick={handleCloseRules}
               className="absolute inset-0 bg-black/35 backdrop-blur-xs dark:bg-black/60"
             />
             <motion.div
@@ -370,7 +472,7 @@ export function QueensGame({
                 type="button"
                 onClick={() => {
                   feedback.click();
-                  setShowRules(false);
+                  handleCloseRules();
                 }}
                 aria-label="Close"
                 className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.05] text-neutral-600 dark:bg-white/[0.08] dark:text-neutral-300"
@@ -388,16 +490,13 @@ export function QueensGame({
                 <li>• {t.queens.rule4}</li>
               </ul>
 
-              <button
-                type="button"
-                onClick={() => {
-                  feedback.click();
-                  setShowRules(false);
-                }}
-                className="mt-5 w-full rounded-2xl bg-[#D97706] py-3 text-[14px] font-semibold text-white shadow-[0_4px_14px_-4px_rgba(180,83,9,0.28)] transition-colors hover:bg-[#B45309] active:scale-[0.98] dark:bg-amber-500/90 dark:text-neutral-950"
-              >
-                {t.queens.gotIt}
-              </button>
+              <TutorialModalFooter
+                isAutoTutorial={isAutoTutorial}
+                manualLabel={t.queens.gotIt}
+                accentButtonClass="bg-[#D97706] text-white shadow-[0_4px_14px_-4px_rgba(180,83,9,0.28)] hover:bg-[#B45309] dark:bg-amber-500/90 dark:text-neutral-950"
+                onDismiss={handleCloseRules}
+                onSkipAll={handleSkipAllTutorials}
+              />
             </motion.div>
           </div>
         )}

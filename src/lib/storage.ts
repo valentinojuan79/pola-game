@@ -1,6 +1,6 @@
 // Guest-first localStorage persistence for Pola
 
-export type PolaGameType = "queens" | "zip";
+export type PolaGameType = "queens" | "zip" | "tango" | "mini-sudoku" | "patches";
 
 export interface DailyCompletion {
   date: string; // YYYY-MM-DD
@@ -10,6 +10,8 @@ export interface DailyCompletion {
   totalSeconds: number;
   hintsUsed: number;
   completedAt: string;
+  /** Optional serialized final board state for Read-Only Daily Review Mode */
+  boardSnapshot?: unknown;
 }
 
 export interface LocalProfileStats {
@@ -22,8 +24,15 @@ export interface LocalProfileStats {
 
 const STATS_KEY = "pola_stats_v1";
 const AUTO_X_KEY = "pola_queens_auto_x";
+const TANGO_VISUAL_MODE_KEY = "pola_tango_visual_mode";
+const TUTORIAL_PREFS_KEY = "pola_tutorial_prefs_v1";
 
-const defaultStats: LocalProfileStats = {
+export interface TutorialPrefs {
+  seen: Partial<Record<PolaGameType, boolean>>;
+  skipAll: boolean;
+}
+
+export const DEFAULT_STATS: LocalProfileStats = {
   currentStreak: 0,
   longestStreak: 0,
   lastDailyDate: null,
@@ -46,10 +55,10 @@ function getYesterdayDateString(todayStr: string): string {
 }
 
 export function loadStats(): LocalProfileStats {
-  if (typeof window === "undefined") return defaultStats;
+  if (typeof window === "undefined") return DEFAULT_STATS;
   try {
     const raw = localStorage.getItem(STATS_KEY);
-    if (!raw) return defaultStats;
+    if (!raw) return DEFAULT_STATS;
     const parsed = JSON.parse(raw) as Partial<LocalProfileStats>;
     return {
       currentStreak: parsed.currentStreak ?? 0,
@@ -59,7 +68,7 @@ export function loadStats(): LocalProfileStats {
       dailyCompletions: parsed.dailyCompletions ?? {},
     };
   } catch {
-    return defaultStats;
+    return DEFAULT_STATS;
   }
 }
 
@@ -79,6 +88,7 @@ export function recordGameCompletion(params: {
   elapsedSeconds: number;
   penaltySeconds: number;
   hintsUsed: number;
+  boardSnapshot?: unknown;
 }): LocalProfileStats {
   const stats = loadStats();
   const totalSeconds = params.elapsedSeconds + params.penaltySeconds;
@@ -101,6 +111,7 @@ export function recordGameCompletion(params: {
         totalSeconds,
         hintsUsed: params.hintsUsed,
         completedAt: new Date().toISOString(),
+        boardSnapshot: params.boardSnapshot,
       };
 
       // Update streak if this is the first daily completion for today
@@ -146,4 +157,68 @@ export function saveAutoXPreference(enabled: boolean): void {
   } catch {
     // Ignore
   }
+}
+
+export function loadTangoVisualMode(): "icons" | "circles" {
+  if (typeof window === "undefined") return "icons";
+  try {
+    const val = localStorage.getItem(TANGO_VISUAL_MODE_KEY);
+    return val === "circles" ? "circles" : "icons";
+  } catch {
+    return "icons";
+  }
+}
+
+export function saveTangoVisualMode(mode: "icons" | "circles"): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(TANGO_VISUAL_MODE_KEY, mode);
+  } catch {
+    // Ignore
+  }
+}
+
+export function loadTutorialPrefs(): TutorialPrefs {
+  if (typeof window === "undefined") return { seen: {}, skipAll: false };
+  try {
+    const raw = localStorage.getItem(TUTORIAL_PREFS_KEY);
+    if (!raw) return { seen: {}, skipAll: false };
+    const parsed = JSON.parse(raw) as Partial<TutorialPrefs>;
+    return {
+      seen: parsed.seen ?? {},
+      skipAll: Boolean(parsed.skipAll),
+    };
+  } catch {
+    return { seen: {}, skipAll: false };
+  }
+}
+
+export function saveTutorialPrefs(prefs: TutorialPrefs): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(TUTORIAL_PREFS_KEY, JSON.stringify(prefs));
+  } catch {
+    // Ignore
+  }
+}
+
+export function shouldAutoShowTutorial(game: PolaGameType): boolean {
+  const prefs = loadTutorialPrefs();
+  return !prefs.skipAll && !prefs.seen[game];
+}
+
+export function markTutorialSeen(game: PolaGameType): void {
+  const prefs = loadTutorialPrefs();
+  saveTutorialPrefs({
+    ...prefs,
+    seen: { ...prefs.seen, [game]: true },
+  });
+}
+
+export function setSkipAllTutorials(skip: boolean): void {
+  const prefs = loadTutorialPrefs();
+  saveTutorialPrefs({
+    ...prefs,
+    skipAll: skip,
+  });
 }

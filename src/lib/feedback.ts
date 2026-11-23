@@ -167,6 +167,38 @@ class TactileFeedback {
     osc.stop(now + 0.13);
   }
 
+  /** Crisp higher-pitched ascending chime when a row, column, or 2x3 block is completed */
+  public unitComplete(comboCount: number = 1) {
+    this.ensureInit();
+    if (this.muted) return;
+    this.vibrate(comboCount > 1 ? [14, 30, 18] : [12, 24, 14]);
+    const ctx = this.getAudioContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    // Brighter, higher-pitched glassy chime (G5 -> B5 -> D6, or higher on combo)
+    const notes =
+      comboCount > 1
+        ? [783.99, 987.77, 1174.66, 1567.98] // G5 B5 D6 G6
+        : [783.99, 987.77, 1318.51]; // G5 B5 E6
+    notes.forEach((freq, idx) => {
+      const start = now + idx * 0.055;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, start);
+
+      gain.gain.setValueAtTime(0.001, start);
+      gain.gain.linearRampToValueAtTime(0.075, start + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0008, start + 0.28);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.31);
+    });
+  }
+
   /** Warm iOS-like ascending triad chime on puzzle completion */
   public chime() {
     this.ensureInit();

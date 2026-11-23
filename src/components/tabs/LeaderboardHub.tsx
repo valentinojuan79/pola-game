@@ -4,10 +4,13 @@ import React, { useEffect, useState } from "react";
 import {
   Crown,
   Flame,
+  Grid3X3,
+  LayoutGrid,
   LogOut,
   Medal,
   Route,
   Sparkles,
+  SunMoon,
   UserPlus,
   CheckCircle2,
 } from "lucide-react";
@@ -145,15 +148,24 @@ export function LeaderboardHub({
 
       {/* Daily Leaderboard Section with Game-Colored Switcher */}
       <div className="mt-6">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <div className="glass-card inline-flex rounded-full p-1">
+        <div className="mb-3 flex flex-col gap-2">
+          <div className="flex items-center justify-between px-0.5">
+            <span className="text-[11.5px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+              {t.today.dailyChallenge}
+            </span>
+            <span className="tabular-nums text-[12px] text-neutral-400">
+              {todayDateStr}
+            </span>
+          </div>
+
+          <div className="glass-card flex items-center gap-1 overflow-x-auto rounded-full p-1">
             <button
               type="button"
               onClick={() => {
                 feedback.click();
                 setSelectedGame("queens");
               }}
-              className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition-all ${
+              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition-all ${
                 selectedGame === "queens"
                   ? "border-amber-500/40 bg-amber-500/[0.14] text-amber-950 dark:border-amber-400/35 dark:bg-amber-400/[0.18] dark:text-amber-100"
                   : "border-transparent text-neutral-600 hover:text-amber-800 dark:text-neutral-300"
@@ -168,7 +180,7 @@ export function LeaderboardHub({
                 feedback.click();
                 setSelectedGame("zip");
               }}
-              className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition-all ${
+              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition-all ${
                 selectedGame === "zip"
                   ? "border-sky-500/40 bg-sky-500/[0.14] text-sky-950 dark:border-sky-400/35 dark:bg-sky-400/[0.18] dark:text-sky-100"
                   : "border-transparent text-neutral-600 hover:text-sky-800 dark:text-neutral-300"
@@ -177,11 +189,52 @@ export function LeaderboardHub({
               <Route className="h-3.5 w-3.5" />
               {t.games.zip.name}
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                feedback.click();
+                setSelectedGame("tango");
+              }}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition-all ${
+                selectedGame === "tango"
+                  ? "border-orange-500/40 bg-orange-500/[0.14] text-orange-950 dark:border-orange-400/35 dark:bg-orange-400/[0.18] dark:text-orange-100"
+                  : "border-transparent text-neutral-600 hover:text-orange-800 dark:text-neutral-300"
+              }`}
+            >
+              <SunMoon className="h-3.5 w-3.5" />
+              {t.games.tango.name}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                feedback.click();
+                setSelectedGame("mini-sudoku");
+              }}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition-all ${
+                selectedGame === "mini-sudoku"
+                  ? "border-emerald-500/40 bg-emerald-500/[0.14] text-emerald-950 dark:border-emerald-400/35 dark:bg-emerald-400/[0.18] dark:text-emerald-100"
+                  : "border-transparent text-neutral-600 hover:text-emerald-800 dark:text-neutral-300"
+              }`}
+            >
+              <Grid3X3 className="h-3.5 w-3.5" />
+              {t.games.miniSudoku.name}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                feedback.click();
+                setSelectedGame("patches");
+              }}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition-all ${
+                selectedGame === "patches"
+                  ? "border-rose-500/40 bg-rose-500/[0.14] text-rose-950 dark:border-rose-400/35 dark:bg-rose-400/[0.18] dark:text-rose-100"
+                  : "border-transparent text-neutral-600 hover:text-rose-800 dark:text-neutral-300"
+              }`}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              {t.games.patches.name}
+            </button>
           </div>
-
-          <span className="tabular-nums text-[12px] text-neutral-400">
-            {todayDateStr}
-          </span>
         </div>
 
         <div className="glass-card overflow-hidden rounded-[24px]">
@@ -193,6 +246,12 @@ export function LeaderboardHub({
             <div className="p-6 text-center text-[13px] text-neutral-500 dark:text-neutral-400">
               {selectedGame === "zip"
                 ? t.leaderboard.emptyBoardZip
+                : selectedGame === "tango"
+                ? t.leaderboard.emptyBoardTango
+                : selectedGame === "mini-sudoku"
+                ? t.leaderboard.emptyBoardMiniSudoku
+                : selectedGame === "patches"
+                ? t.leaderboard.emptyBoardPatches
                 : t.leaderboard.emptyBoard}
             </div>
           ) : (
@@ -204,6 +263,12 @@ export function LeaderboardHub({
                     entry.isCurrentUser
                       ? selectedGame === "zip"
                         ? "bg-sky-500/[0.08] dark:bg-sky-400/[0.08]"
+                        : selectedGame === "tango"
+                        ? "bg-orange-500/[0.08] dark:bg-orange-400/[0.08]"
+                        : selectedGame === "mini-sudoku"
+                        ? "bg-emerald-500/[0.08] dark:bg-emerald-400/[0.08]"
+                        : selectedGame === "patches"
+                        ? "bg-rose-500/[0.08] dark:bg-rose-400/[0.08]"
                         : "bg-amber-500/[0.08] dark:bg-amber-400/[0.08]"
                       : ""
                   }`}
@@ -225,6 +290,12 @@ export function LeaderboardHub({
                           className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
                             selectedGame === "zip"
                               ? "bg-sky-500/20 text-sky-800 dark:text-sky-300"
+                              : selectedGame === "tango"
+                              ? "bg-orange-500/20 text-orange-800 dark:text-orange-300"
+                              : selectedGame === "mini-sudoku"
+                              ? "bg-emerald-500/20 text-emerald-800 dark:text-emerald-300"
+                              : selectedGame === "patches"
+                              ? "bg-rose-500/20 text-rose-800 dark:text-rose-300"
                               : "bg-amber-500/20 text-amber-800 dark:text-amber-300"
                           }`}
                         >

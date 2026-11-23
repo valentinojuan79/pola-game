@@ -7,10 +7,13 @@ import {
   Clock,
   Crown,
   Flame,
+  Grid3X3,
   Infinity as InfinityIcon,
+  LayoutGrid,
   Lightbulb,
   Route,
   Share2,
+  SunMoon,
   UserPlus,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -108,11 +111,23 @@ export function WinModal({
               className={`mx-auto flex h-14 w-14 items-center justify-center rounded-[20px] border ${
                 game === "zip"
                   ? "bg-sky-500/18 text-sky-600 dark:bg-sky-400/18 dark:text-sky-300 border-sky-500/25"
+                  : game === "tango"
+                  ? "bg-orange-500/18 text-orange-600 dark:bg-orange-400/18 dark:text-orange-300 border-orange-500/25"
+                  : game === "mini-sudoku"
+                  ? "bg-emerald-500/18 text-emerald-600 dark:bg-emerald-400/18 dark:text-emerald-300 border-emerald-500/25"
+                  : game === "patches"
+                  ? "bg-rose-500/18 text-rose-600 dark:bg-rose-400/18 dark:text-rose-300 border-rose-500/25"
                   : "bg-amber-500/18 text-amber-600 dark:bg-amber-400/18 dark:text-amber-300 border-amber-500/25"
               }`}
             >
               {game === "zip" ? (
                 <Route className="h-7 w-7 stroke-[2.2]" />
+              ) : game === "tango" ? (
+                <SunMoon className="h-7 w-7 stroke-[2.2]" />
+              ) : game === "mini-sudoku" ? (
+                <Grid3X3 className="h-7 w-7 stroke-[2.2]" />
+              ) : game === "patches" ? (
+                <LayoutGrid className="h-7 w-7 stroke-[2.2]" />
               ) : (
                 <Crown className="h-7 w-7 fill-current" />
               )}
@@ -126,6 +141,18 @@ export function WinModal({
                 ? mode === "daily"
                   ? t.win.subtitleDailyZip
                   : t.win.subtitleUnlimitedZip
+                : game === "tango"
+                ? mode === "daily"
+                  ? t.win.subtitleDailyTango
+                  : t.win.subtitleUnlimitedTango
+                : game === "mini-sudoku"
+                ? mode === "daily"
+                  ? t.win.subtitleDailyMiniSudoku
+                  : t.win.subtitleUnlimitedMiniSudoku
+                : game === "patches"
+                ? mode === "daily"
+                  ? t.win.subtitleDailyPatches
+                  : t.win.subtitleUnlimitedPatches
                 : mode === "daily"
                 ? t.win.subtitleDaily
                 : t.win.subtitleUnlimited}
@@ -190,6 +217,12 @@ export function WinModal({
                       className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-semibold text-white shadow-xs transition-colors active:scale-95 dark:text-neutral-950 ${
                         game === "zip"
                           ? "bg-[#0369A1] hover:bg-[#075985] dark:bg-sky-400/90"
+                          : game === "tango"
+                          ? "bg-[#EA580C] hover:bg-[#C2410C] dark:bg-orange-400/90"
+                          : game === "mini-sudoku"
+                          ? "bg-[#059669] hover:bg-[#047857] dark:bg-emerald-400/90"
+                          : game === "patches"
+                          ? "bg-[#E11D48] hover:bg-[#BE123C] dark:bg-rose-400/90"
                           : "bg-[#D97706] hover:bg-[#B45309] dark:bg-amber-500/90"
                       }`}
                     >
@@ -209,6 +242,12 @@ export function WinModal({
                 className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[14px] font-semibold text-white transition-all active:scale-[0.98] dark:text-neutral-950 ${
                   game === "zip"
                     ? "bg-[#0369A1] shadow-[0_4px_14px_-4px_rgba(3,105,161,0.3)] hover:bg-[#075985] dark:bg-sky-400/90 dark:hover:bg-sky-300"
+                    : game === "tango"
+                    ? "bg-[#EA580C] shadow-[0_4px_14px_-4px_rgba(234,88,12,0.3)] hover:bg-[#C2410C] dark:bg-orange-400/90 dark:hover:bg-orange-300"
+                    : game === "mini-sudoku"
+                    ? "bg-[#059669] shadow-[0_4px_14px_-4px_rgba(5,150,105,0.3)] hover:bg-[#047857] dark:bg-emerald-400/90 dark:hover:bg-emerald-300"
+                    : game === "patches"
+                    ? "bg-[#E11D48] shadow-[0_4px_14px_-4px_rgba(225,29,72,0.3)] hover:bg-[#BE123C] dark:bg-rose-400/90 dark:hover:bg-rose-300"
                     : "bg-[#D97706] shadow-[0_4px_14px_-4px_rgba(180,83,9,0.3)] hover:bg-[#B45309] dark:bg-amber-500/90 dark:hover:bg-amber-400"
                 }`}
               >

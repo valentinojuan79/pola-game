@@ -10,6 +10,9 @@ import { UnlimitedHub } from "@/components/tabs/UnlimitedHub";
 import { LeaderboardHub } from "@/components/tabs/LeaderboardHub";
 import { QueensGame } from "@/components/games/queens/QueensGame";
 import { ZipGame } from "@/components/games/zip/ZipGame";
+import { TangoGame } from "@/components/games/tango/TangoGame";
+import { MiniSudokuGame } from "@/components/games/mini-sudoku/MiniSudokuGame";
+import { PatchesGame } from "@/components/games/patches/PatchesGame";
 import {
   getDailyQueensPuzzle,
   getDifficultyForDateString,
@@ -23,10 +26,36 @@ import {
 } from "@/lib/games/zip/presets";
 import type { ZipDifficulty, ZipPuzzle } from "@/lib/games/zip/types";
 import {
+  getDailyTangoPuzzle,
+  getTangoDifficultyForDateString,
+  getUnlimitedTangoPuzzle,
+} from "@/lib/games/tango/presets";
+import type { TangoDifficulty, TangoPuzzle } from "@/lib/games/tango/types";
+import {
+  getDailyMiniSudokuPuzzle,
+  getMiniSudokuDifficultyForDateString,
+  getUnlimitedMiniSudokuPuzzle,
+} from "@/lib/games/mini-sudoku/presets";
+import type {
+  MiniSudokuDifficulty,
+  MiniSudokuPuzzle,
+} from "@/lib/games/mini-sudoku/types";
+import {
+  getDailyPatchesPuzzle,
+  getPatchesDifficultyForDateString,
+  getUnlimitedPatchesPuzzle,
+} from "@/lib/games/patches/presets";
+import type {
+  PatchesDifficulty,
+  PatchesPuzzle,
+} from "@/lib/games/patches/types";
+import {
+  DEFAULT_STATS,
   getDailyCompletion,
   getTodayDateString,
   loadStats,
   recordGameCompletion,
+  type DailyCompletion,
   type LocalProfileStats,
   type PolaGameType,
 } from "@/lib/storage";
@@ -43,17 +72,37 @@ type ActiveGameSession =
       game: "queens";
       mode: "daily" | "unlimited";
       puzzle: QueensPuzzle;
+      reviewCompletion?: DailyCompletion | null;
     }
   | {
       game: "zip";
       mode: "daily" | "unlimited";
       puzzle: ZipPuzzle;
+      reviewCompletion?: DailyCompletion | null;
+    }
+  | {
+      game: "tango";
+      mode: "daily" | "unlimited";
+      puzzle: TangoPuzzle;
+      reviewCompletion?: DailyCompletion | null;
+    }
+  | {
+      game: "mini-sudoku";
+      mode: "daily" | "unlimited";
+      puzzle: MiniSudokuPuzzle;
+      reviewCompletion?: DailyCompletion | null;
+    }
+  | {
+      game: "patches";
+      mode: "daily" | "unlimited";
+      puzzle: PatchesPuzzle;
+      reviewCompletion?: DailyCompletion | null;
     };
 
 export default function PolaAppPage() {
   const [activeTab, setActiveTab] = useState<AppTab>("today");
   const [activeGame, setActiveGame] = useState<ActiveGameSession | null>(null);
-  const [stats, setStats] = useState<LocalProfileStats>(() => loadStats());
+  const [stats, setStats] = useState<LocalProfileStats>(DEFAULT_STATS);
   const [user, setUser] = useState<PolaUser | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [dailyRank, setDailyRank] = useState<number | null>(null);
@@ -66,6 +115,18 @@ export default function PolaAppPage() {
   );
   const todayZipDifficulty = useMemo(
     () => getZipDifficultyForDateString(todayDateStr),
+    [todayDateStr]
+  );
+  const todayTangoDifficulty = useMemo(
+    () => getTangoDifficultyForDateString(todayDateStr),
+    [todayDateStr]
+  );
+  const todayMiniSudokuDifficulty = useMemo(
+    () => getMiniSudokuDifficultyForDateString(todayDateStr),
+    [todayDateStr]
+  );
+  const todayPatchesDifficulty = useMemo(
+    () => getPatchesDifficultyForDateString(todayDateStr),
     [todayDateStr]
   );
 
@@ -86,11 +147,31 @@ export default function PolaAppPage() {
     [stats, todayDateStr]
   );
 
+  const todayTangoCompletion = useMemo(
+    () => stats.dailyCompletions[`${todayDateStr}:tango`] ?? null,
+    [stats, todayDateStr]
+  );
+
+  const todayMiniSudokuCompletion = useMemo(
+    () => stats.dailyCompletions[`${todayDateStr}:mini-sudoku`] ?? null,
+    [stats, todayDateStr]
+  );
+
+  const todayPatchesCompletion = useMemo(
+    () => stats.dailyCompletions[`${todayDateStr}:patches`] ?? null,
+    [stats, todayDateStr]
+  );
+
   const handlePlayDailyQueens = useCallback(() => {
     setDailyRank(null);
     const puzzle = getDailyQueensPuzzle(todayDateStr);
-    setActiveGame({ game: "queens", mode: "daily", puzzle });
-  }, [todayDateStr]);
+    setActiveGame({
+      game: "queens",
+      mode: "daily",
+      puzzle,
+      reviewCompletion: todayQueensCompletion,
+    });
+  }, [todayDateStr, todayQueensCompletion]);
 
   const handlePlayUnlimitedQueens = useCallback(
     (difficulty: QueensDifficulty) => {
@@ -109,8 +190,13 @@ export default function PolaAppPage() {
   const handlePlayDailyZip = useCallback(() => {
     setDailyRank(null);
     const puzzle = getDailyZipPuzzle(todayDateStr);
-    setActiveGame({ game: "zip", mode: "daily", puzzle });
-  }, [todayDateStr]);
+    setActiveGame({
+      game: "zip",
+      mode: "daily",
+      puzzle,
+      reviewCompletion: todayZipCompletion,
+    });
+  }, [todayDateStr, todayZipCompletion]);
 
   const handlePlayUnlimitedZip = useCallback(
     (difficulty: ZipDifficulty) => {
@@ -126,11 +212,87 @@ export default function PolaAppPage() {
     [unlimitedNonce]
   );
 
+  const handlePlayDailyTango = useCallback(() => {
+    setDailyRank(null);
+    const puzzle = getDailyTangoPuzzle(todayDateStr);
+    setActiveGame({
+      game: "tango",
+      mode: "daily",
+      puzzle,
+      reviewCompletion: todayTangoCompletion,
+    });
+  }, [todayDateStr, todayTangoCompletion]);
+
+  const handlePlayUnlimitedTango = useCallback(
+    (difficulty: TangoDifficulty) => {
+      setDailyRank(null);
+      const nextNonce = unlimitedNonce + 1;
+      setUnlimitedNonce(nextNonce);
+      const puzzle = getUnlimitedTangoPuzzle(
+        difficulty,
+        `${Date.now()}-${nextNonce}`
+      );
+      setActiveGame({ game: "tango", mode: "unlimited", puzzle });
+    },
+    [unlimitedNonce]
+  );
+
+  const handlePlayDailyMiniSudoku = useCallback(() => {
+    setDailyRank(null);
+    const puzzle = getDailyMiniSudokuPuzzle(todayDateStr);
+    setActiveGame({
+      game: "mini-sudoku",
+      mode: "daily",
+      puzzle,
+      reviewCompletion: todayMiniSudokuCompletion,
+    });
+  }, [todayDateStr, todayMiniSudokuCompletion]);
+
+  const handlePlayUnlimitedMiniSudoku = useCallback(
+    (difficulty: MiniSudokuDifficulty) => {
+      setDailyRank(null);
+      const nextNonce = unlimitedNonce + 1;
+      setUnlimitedNonce(nextNonce);
+      const puzzle = getUnlimitedMiniSudokuPuzzle(
+        difficulty,
+        `${Date.now()}-${nextNonce}`
+      );
+      setActiveGame({ game: "mini-sudoku", mode: "unlimited", puzzle });
+    },
+    [unlimitedNonce]
+  );
+
+  const handlePlayDailyPatches = useCallback(() => {
+    setDailyRank(null);
+    const puzzle = getDailyPatchesPuzzle(todayDateStr);
+    setActiveGame({
+      game: "patches",
+      mode: "daily",
+      puzzle,
+      reviewCompletion: todayPatchesCompletion,
+    });
+  }, [todayDateStr, todayPatchesCompletion]);
+
+  const handlePlayUnlimitedPatches = useCallback(
+    (difficulty: PatchesDifficulty) => {
+      setDailyRank(null);
+      const nextNonce = unlimitedNonce + 1;
+      setUnlimitedNonce(nextNonce);
+      const puzzle = getUnlimitedPatchesPuzzle(
+        difficulty,
+        `${Date.now()}-${nextNonce}`
+      );
+      setActiveGame({ game: "patches", mode: "unlimited", puzzle });
+    },
+    [unlimitedNonce]
+  );
+
   const handleGameComplete = useCallback(
     async (result: {
       elapsedSeconds: number;
       penaltySeconds: number;
       hintsUsed: number;
+      boardSnapshot?: unknown;
     }) => {
       if (!activeGame) return;
       const gameType: PolaGameType = activeGame.game;
@@ -141,6 +303,7 @@ export default function PolaAppPage() {
         elapsedSeconds: result.elapsedSeconds,
         penaltySeconds: result.penaltySeconds,
         hintsUsed: result.hintsUsed,
+        boardSnapshot: result.boardSnapshot,
       });
       setStats(updated);
 
@@ -168,7 +331,13 @@ export default function PolaAppPage() {
   const handleAuthenticated = useCallback(
     async (signedInUser: PolaUser) => {
       setUser(signedInUser);
-      const games: PolaGameType[] = ["queens", "zip"];
+      const games: PolaGameType[] = [
+        "queens",
+        "zip",
+        "tango",
+        "mini-sudoku",
+        "patches",
+      ];
       for (const gameType of games) {
         const completion = getDailyCompletion(todayDateStr, gameType);
         if (completion) {
@@ -205,13 +374,14 @@ export default function PolaAppPage() {
       <AnimatePresence mode="wait">
         {activeGame?.game === "queens" ? (
           <QueensGame
-            key={activeGame.puzzle.id}
+            key={`${activeGame.puzzle.id}-${activeGame.mode}`}
             puzzle={activeGame.puzzle}
             mode={activeGame.mode}
             dateStr={todayDateStr}
             streak={stats.currentStreak}
             user={user}
             dailyRank={dailyRank}
+            reviewCompletion={activeGame.reviewCompletion ?? null}
             onComplete={handleGameComplete}
             onExit={() => setActiveGame(null)}
             onPlayUnlimitedNext={() =>
@@ -221,17 +391,69 @@ export default function PolaAppPage() {
           />
         ) : activeGame?.game === "zip" ? (
           <ZipGame
-            key={activeGame.puzzle.id}
+            key={`${activeGame.puzzle.id}-${activeGame.mode}`}
             puzzle={activeGame.puzzle}
             mode={activeGame.mode}
             dateStr={todayDateStr}
             streak={stats.currentStreak}
             user={user}
             dailyRank={dailyRank}
+            reviewCompletion={activeGame.reviewCompletion ?? null}
             onComplete={handleGameComplete}
             onExit={() => setActiveGame(null)}
             onPlayUnlimitedNext={() =>
               handlePlayUnlimitedZip(activeGame.puzzle.difficulty)
+            }
+            onOpenAuth={() => setAuthOpen(true)}
+          />
+        ) : activeGame?.game === "tango" ? (
+          <TangoGame
+            key={`${activeGame.puzzle.id}-${activeGame.mode}`}
+            puzzle={activeGame.puzzle}
+            mode={activeGame.mode}
+            dateStr={todayDateStr}
+            streak={stats.currentStreak}
+            user={user}
+            dailyRank={dailyRank}
+            reviewCompletion={activeGame.reviewCompletion ?? null}
+            onComplete={handleGameComplete}
+            onExit={() => setActiveGame(null)}
+            onPlayUnlimitedNext={() =>
+              handlePlayUnlimitedTango(activeGame.puzzle.difficulty)
+            }
+            onOpenAuth={() => setAuthOpen(true)}
+          />
+        ) : activeGame?.game === "mini-sudoku" ? (
+          <MiniSudokuGame
+            key={`${activeGame.puzzle.id}-${activeGame.mode}`}
+            puzzle={activeGame.puzzle}
+            mode={activeGame.mode}
+            dateStr={todayDateStr}
+            streak={stats.currentStreak}
+            user={user}
+            dailyRank={dailyRank}
+            reviewCompletion={activeGame.reviewCompletion ?? null}
+            onComplete={handleGameComplete}
+            onExit={() => setActiveGame(null)}
+            onPlayUnlimitedNext={() =>
+              handlePlayUnlimitedMiniSudoku(activeGame.puzzle.difficulty)
+            }
+            onOpenAuth={() => setAuthOpen(true)}
+          />
+        ) : activeGame?.game === "patches" ? (
+          <PatchesGame
+            key={`${activeGame.puzzle.id}-${activeGame.mode}`}
+            puzzle={activeGame.puzzle}
+            mode={activeGame.mode}
+            dateStr={todayDateStr}
+            streak={stats.currentStreak}
+            user={user}
+            dailyRank={dailyRank}
+            reviewCompletion={activeGame.reviewCompletion ?? null}
+            onComplete={handleGameComplete}
+            onExit={() => setActiveGame(null)}
+            onPlayUnlimitedNext={() =>
+              handlePlayUnlimitedPatches(activeGame.puzzle.difficulty)
             }
             onOpenAuth={() => setAuthOpen(true)}
           />
@@ -246,10 +468,20 @@ export default function PolaAppPage() {
                   todayDateStr={todayDateStr}
                   todayDifficulty={todayDifficulty}
                   todayZipDifficulty={todayZipDifficulty}
+                  todayTangoDifficulty={todayTangoDifficulty}
+                  todayMiniSudokuDifficulty={todayMiniSudokuDifficulty}
+                  todayPatchesDifficulty={todayPatchesDifficulty}
                   todayQueensCompletion={todayQueensCompletion}
                   todayZipCompletion={todayZipCompletion}
+                  todayTangoCompletion={todayTangoCompletion}
+                  todayMiniSudokuCompletion={todayMiniSudokuCompletion}
+                  todayPatchesCompletion={todayPatchesCompletion}
                   onPlayDailyQueens={handlePlayDailyQueens}
                   onPlayDailyZip={handlePlayDailyZip}
+                  onPlayDailyTango={handlePlayDailyTango}
+                  onPlayDailyMiniSudoku={handlePlayDailyMiniSudoku}
+                  onPlayDailyPatches={handlePlayDailyPatches}
+                  onGoToUnlimited={() => setActiveTab("unlimited")}
                 />
               )}
 
@@ -257,6 +489,9 @@ export default function PolaAppPage() {
                 <UnlimitedHub
                   onPlayUnlimitedQueens={handlePlayUnlimitedQueens}
                   onPlayUnlimitedZip={handlePlayUnlimitedZip}
+                  onPlayUnlimitedTango={handlePlayUnlimitedTango}
+                  onPlayUnlimitedMiniSudoku={handlePlayUnlimitedMiniSudoku}
+                  onPlayUnlimitedPatches={handlePlayUnlimitedPatches}
                 />
               )}
 
