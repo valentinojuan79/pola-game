@@ -2,7 +2,7 @@
 
 **Pola** is a mobile-first, iOS PWA daily and unlimited logic puzzle web app crafted with tactile interactions and a calm iOS Liquid Glass aesthetic.
 
-**Live Demo:** [pola-game-three.vercel.app](https://pola-game-three.vercel.app)
+**Live Demo:** [playpola.vercel.app](https://playpola.vercel.app)
 
 ---
 
