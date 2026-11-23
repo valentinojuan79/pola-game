@@ -311,10 +311,10 @@ export function QueensGame({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 12 }}
       transition={{ duration: 0.2 }}
-      className="flex min-h-[100dvh] flex-col justify-between px-4 pb-6 safe-pt safe-pb"
+      className="flex min-h-[100dvh] flex-col justify-between px-4 pb-6 safe-pb"
     >
       {/* Top Game Navigation Bar — 3-column grid for dead-center title & timer */}
-      <div className="grid grid-cols-[84px_1fr_84px] items-center pt-2 pb-3">
+      <div className="relative z-10 grid grid-cols-[84px_1fr_84px] items-center pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3">
         <button
           type="button"
           onClick={() => {

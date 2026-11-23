@@ -21,7 +21,7 @@ export function HeaderBar() {
   };
 
   return (
-    <header className="flex items-center justify-between px-5 pt-3 pb-2 safe-pt">
+    <header className="relative z-10 flex items-center justify-between px-5 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-2">
       <div className="flex items-center gap-2.5">
         {/* Signature 4-tile Pola squircle glass badge */}
         <div className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-white/85 border border-white/90 shadow-[0_4px_14px_-3px_rgba(14,165,233,0.22),inset_0_1px_0_0_rgba(255,255,255,0.95)] dark:bg-white/[0.09] dark:border-white/[0.15] dark:shadow-[0_4px_14px_-3px_rgba(0,0,0,0.5)]">

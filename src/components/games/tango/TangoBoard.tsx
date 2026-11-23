@@ -139,13 +139,13 @@ export function TangoBoard({
 
   return (
     <div
-      className="glass-card relative aspect-square w-full max-w-[376px] select-none overflow-hidden rounded-[26px] p-2.5"
+      className="glass-card relative w-full max-w-[376px] select-none rounded-2xl p-2.5"
       style={{ touchAction: "none", overscrollBehavior: "none" }}
     >
       {/* Inner strict 6x6 coordinate frame */}
-      <div className="relative h-full w-full overflow-hidden rounded-[18px] border border-neutral-300/70 bg-white/75 dark:border-white/[0.12] dark:bg-neutral-900/65">
+      <div className="relative aspect-square w-full overflow-hidden rounded-xl border border-neutral-300/70 bg-white/75 dark:border-white/[0.12] dark:bg-neutral-900/65">
         {/* 6x6 Cell Grid */}
-        <div className="grid h-full w-full grid-cols-6 grid-rows-6">
+        <div className="absolute inset-0 grid grid-cols-6 grid-rows-6">
           {grid.map((row, r) =>
             row.map((val, c) => {
               const key = cellKey(r, c);
@@ -261,7 +261,8 @@ export function TangoBoard({
             <div
               key={cKey}
               style={{ left: `${leftPct}%`, top: `${topPct}%` }}
-              className={`pointer-events-none absolute z-20 flex h-[20px] w-[20px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-[12px] font-bold leading-none shadow-xs transition-colors duration-150 ${
+              aria-hidden="true"
+              className={`pointer-events-none absolute z-20 flex h-[20px] w-[20px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border shadow-xs transition-colors duration-150 ${
                 isViolated
                   ? "border-rose-500 bg-rose-500 text-white dark:border-rose-400 dark:bg-rose-500"
                   : isHinted
@@ -269,7 +270,57 @@ export function TangoBoard({
                   : "border-neutral-300/90 bg-white/95 text-neutral-700 dark:border-white/20 dark:bg-neutral-800/95 dark:text-neutral-200"
               }`}
             >
-              {con.type === "same" ? "=" : "×"}
+              {con.type === "same" ? (
+                <svg
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  className="h-3 w-3 shrink-0"
+                >
+                  <line
+                    x1="3"
+                    y1="4.25"
+                    x2="9"
+                    y2="4.25"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                  />
+                  <line
+                    x1="3"
+                    y1="7.75"
+                    x2="9"
+                    y2="7.75"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  className="h-3 w-3 shrink-0"
+                >
+                  <line
+                    x1="3.25"
+                    y1="3.25"
+                    x2="8.75"
+                    y2="8.75"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                  />
+                  <line
+                    x1="8.75"
+                    y1="3.25"
+                    x2="3.25"
+                    y2="8.75"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              )}
             </div>
           );
         })}

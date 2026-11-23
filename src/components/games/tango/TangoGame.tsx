@@ -375,10 +375,10 @@ export function TangoGame({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 12 }}
       transition={{ duration: 0.2 }}
-      className="flex min-h-[100dvh] flex-col justify-between px-4 pb-6 safe-pt safe-pb"
+      className="flex min-h-[100dvh] flex-col justify-between px-4 pb-6 safe-pb"
     >
       {/* Top Game Navigation Bar — dead-center 3-column grid */}
-      <div className="grid grid-cols-[84px_1fr_84px] items-center pt-2 pb-2">
+      <div className="relative z-10 grid grid-cols-[84px_1fr_84px] items-center pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-2">
         <button
           type="button"
           onClick={() => {

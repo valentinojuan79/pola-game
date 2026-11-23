@@ -79,7 +79,7 @@
 }
 
 .safe-pt {
-  padding-top: max(env(safe-area-inset-top), 12px);
+  padding-top: calc(env(safe-area-inset-top) + 0.75rem);
 }
 
 .safe-pb {
