@@ -1,6 +1,12 @@
 // Guest-first localStorage persistence for Pola
 
-export type PolaGameType = "queens" | "zip" | "tango" | "mini-sudoku" | "patches";
+export type PolaGameType =
+  | "queens"
+  | "zip"
+  | "tango"
+  | "mini-sudoku"
+  | "patches"
+  | "fold";
 
 export interface DailyCompletion {
   date: string; // YYYY-MM-DD

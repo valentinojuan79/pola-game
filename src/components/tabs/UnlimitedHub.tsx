@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Crown, Grid3X3, LayoutGrid, Route, SunMoon, Play } from "lucide-react";
+import { Crown, Grid3X3, Layers, LayoutGrid, Route, SunMoon, Play } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { feedback } from "@/lib/feedback";
 import type { QueensDifficulty } from "@/lib/games/queens/types";
@@ -10,6 +10,7 @@ import type { ZipDifficulty } from "@/lib/games/zip/types";
 import type { TangoDifficulty } from "@/lib/games/tango/types";
 import type { MiniSudokuDifficulty } from "@/lib/games/mini-sudoku/types";
 import type { PatchesDifficulty } from "@/lib/games/patches/types";
+import type { FoldDifficulty } from "@/lib/games/fold/types";
 
 interface UnlimitedHubProps {
   onPlayUnlimitedQueens: (difficulty: QueensDifficulty) => void;
@@ -17,6 +18,7 @@ interface UnlimitedHubProps {
   onPlayUnlimitedTango: (difficulty: TangoDifficulty) => void;
   onPlayUnlimitedMiniSudoku: (difficulty: MiniSudokuDifficulty) => void;
   onPlayUnlimitedPatches: (difficulty: PatchesDifficulty) => void;
+  onPlayUnlimitedFold: (difficulty: FoldDifficulty) => void;
 }
 
 const DIFFICULTIES: QueensDifficulty[] = ["easy", "medium", "hard", "expert"];
@@ -27,6 +29,7 @@ export function UnlimitedHub({
   onPlayUnlimitedTango,
   onPlayUnlimitedMiniSudoku,
   onPlayUnlimitedPatches,
+  onPlayUnlimitedFold,
 }: UnlimitedHubProps) {
   const { t } = useI18n();
   const [queensDiff, setQueensDiff] = useState<QueensDifficulty>("easy");
@@ -35,6 +38,7 @@ export function UnlimitedHub({
   const [miniSudokuDiff, setMiniSudokuDiff] =
     useState<MiniSudokuDifficulty>("easy");
   const [patchesDiff, setPatchesDiff] = useState<PatchesDifficulty>("easy");
+  const [foldDiff, setFoldDiff] = useState<FoldDifficulty>("easy");
 
   return (
     <div className="px-5 pt-2 pb-28">
@@ -364,6 +368,71 @@ export function UnlimitedHub({
             onPlayUnlimitedPatches(patchesDiff);
           }}
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#E11D48] py-3.5 text-[14px] font-semibold text-white shadow-[0_4px_14px_-4px_rgba(225,29,72,0.3)] transition-all hover:bg-[#BE123C] dark:bg-rose-400/90 dark:text-neutral-950 dark:hover:bg-rose-300"
+        >
+          <Play className="h-4 w-4 fill-current" />
+          {t.unlimited.startGame}
+        </motion.button>
+      </div>
+
+      {/* Fold Unlimited Card — Calm Soft Lavender / Periwinkle Tinted Glass */}
+      <div className="glass-card mt-4 rounded-[26px] border-indigo-600/[0.18] bg-gradient-to-br from-indigo-500/[0.06] via-white/75 to-violet-500/[0.04] p-5 dark:border-indigo-400/[0.16] dark:from-indigo-500/[0.08] dark:via-neutral-900/60 dark:to-violet-500/[0.06]">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-[15px] bg-indigo-500/[0.12] text-indigo-700 border border-indigo-600/20 dark:bg-indigo-400/15 dark:text-indigo-300 dark:border-indigo-400/20">
+            <Layers className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="font-display text-[18px] font-bold tracking-tight text-neutral-950 dark:text-white">
+              {t.games.fold.name}
+            </h2>
+            <p className="text-[12px] text-neutral-500 dark:text-neutral-400">
+              {t.unlimited.selectDifficulty}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2.5">
+          {DIFFICULTIES.map((diff) => {
+            const active = foldDiff === diff;
+            const info = t.unlimited.foldDifficulties[diff];
+            return (
+              <button
+                key={diff}
+                type="button"
+                onClick={() => {
+                  feedback.click();
+                  setFoldDiff(diff);
+                }}
+                className={`relative rounded-[18px] border p-3 text-left transition-all active:scale-[0.98] ${
+                  active
+                    ? "border-indigo-500/45 bg-indigo-500/[0.12] text-indigo-950 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.65)] dark:border-indigo-400/40 dark:bg-indigo-400/[0.16] dark:text-indigo-100"
+                    : "border-black/[0.06] bg-white/60 text-neutral-800 hover:border-indigo-500/25 hover:bg-white/85 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-neutral-200 dark:hover:bg-white/[0.07]"
+                }`}
+              >
+                <div className="font-display text-[15px] font-bold">
+                  {info.label}
+                </div>
+                <div
+                  className={`mt-0.5 text-[11px] ${
+                    active
+                      ? "text-indigo-900/75 dark:text-indigo-200/80"
+                      : "text-neutral-500 dark:text-neutral-400"
+                  }`}
+                >
+                  {info.desc}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.98 }}
+          onClick={() => {
+            feedback.pop();
+            onPlayUnlimitedFold(foldDiff);
+          }}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#4F46E5] py-3.5 text-[14px] font-semibold text-white shadow-[0_4px_14px_-4px_rgba(79,70,229,0.3)] transition-all hover:bg-[#4338CA] dark:bg-indigo-400/90 dark:text-neutral-950 dark:hover:bg-indigo-300"
         >
           <Play className="h-4 w-4 fill-current" />
           {t.unlimited.startGame}

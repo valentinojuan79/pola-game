@@ -13,6 +13,7 @@ import { ZipGame } from "@/components/games/zip/ZipGame";
 import { TangoGame } from "@/components/games/tango/TangoGame";
 import { MiniSudokuGame } from "@/components/games/mini-sudoku/MiniSudokuGame";
 import { PatchesGame } from "@/components/games/patches/PatchesGame";
+import { FoldGame } from "@/components/games/fold/FoldGame";
 import {
   getDailyQueensPuzzle,
   getDifficultyForDateString,
@@ -50,6 +51,12 @@ import type {
   PatchesPuzzle,
 } from "@/lib/games/patches/types";
 import {
+  getDailyFoldPuzzle,
+  getFoldDifficultyForDateString,
+  getUnlimitedFoldPuzzle,
+} from "@/lib/games/fold/presets";
+import type { FoldDifficulty, FoldPuzzle } from "@/lib/games/fold/types";
+import {
   DEFAULT_STATS,
   getDailyCompletion,
   getTodayDateString,
@@ -60,10 +67,13 @@ import {
   type PolaGameType,
 } from "@/lib/storage";
 import {
-  fetchDailyLeaderboard,
+  ALL_GAME_IDS,
+  fetchUserDailyRank,
   getCurrentUser,
   signOutUser,
   submitDailyScore,
+  syncGuestCompletionsToAccount,
+  syncProfileStreaks,
   type PolaUser,
 } from "@/lib/supabase";
 
@@ -97,6 +107,12 @@ type ActiveGameSession =
       mode: "daily" | "unlimited";
       puzzle: PatchesPuzzle;
       reviewCompletion?: DailyCompletion | null;
+    }
+  | {
+      game: "fold";
+      mode: "daily" | "unlimited";
+      puzzle: FoldPuzzle;
+      reviewCompletion?: DailyCompletion | null;
     };
 
 export default function PolaAppPage() {
@@ -106,6 +122,7 @@ export default function PolaAppPage() {
   const [user, setUser] = useState<PolaUser | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [dailyRank, setDailyRank] = useState<number | null>(null);
+  const [syncVersion, setSyncVersion] = useState(0);
   const [unlimitedNonce, setUnlimitedNonce] = useState(1);
 
   const todayDateStr = useMemo(() => getTodayDateString(), []);
@@ -127,6 +144,10 @@ export default function PolaAppPage() {
   );
   const todayPatchesDifficulty = useMemo(
     () => getPatchesDifficultyForDateString(todayDateStr),
+    [todayDateStr]
+  );
+  const todayFoldDifficulty = useMemo(
+    () => getFoldDifficultyForDateString(todayDateStr),
     [todayDateStr]
   );
 
@@ -159,6 +180,11 @@ export default function PolaAppPage() {
 
   const todayPatchesCompletion = useMemo(
     () => stats.dailyCompletions[`${todayDateStr}:patches`] ?? null,
+    [stats, todayDateStr]
+  );
+
+  const todayFoldCompletion = useMemo(
+    () => stats.dailyCompletions[`${todayDateStr}:fold`] ?? null,
     [stats, todayDateStr]
   );
 
@@ -287,6 +313,31 @@ export default function PolaAppPage() {
     [unlimitedNonce]
   );
 
+  const handlePlayDailyFold = useCallback(() => {
+    setDailyRank(null);
+    const puzzle = getDailyFoldPuzzle(todayDateStr);
+    setActiveGame({
+      game: "fold",
+      mode: "daily",
+      puzzle,
+      reviewCompletion: todayFoldCompletion,
+    });
+  }, [todayDateStr, todayFoldCompletion]);
+
+  const handlePlayUnlimitedFold = useCallback(
+    (difficulty: FoldDifficulty) => {
+      setDailyRank(null);
+      const nextNonce = unlimitedNonce + 1;
+      setUnlimitedNonce(nextNonce);
+      const puzzle = getUnlimitedFoldPuzzle(
+        difficulty,
+        `${Date.now()}-${nextNonce}`
+      );
+      setActiveGame({ game: "fold", mode: "unlimited", puzzle });
+    },
+    [unlimitedNonce]
+  );
+
   const handleGameComplete = useCallback(
     async (result: {
       elapsedSeconds: number;
@@ -316,13 +367,10 @@ export default function PolaAppPage() {
           totalSeconds,
           hintsUsed: result.hintsUsed,
         });
-        const board = await fetchDailyLeaderboard(
-          todayDateStr,
-          gameType,
-          user.id
-        );
-        const idx = board.findIndex((e) => e.isCurrentUser);
-        setDailyRank(idx >= 0 ? idx + 1 : null);
+        await syncProfileStreaks(user, updated);
+        const rank = await fetchUserDailyRank(todayDateStr, gameType, user.id);
+        setDailyRank(rank);
+        setSyncVersion((v) => v + 1);
       }
     },
     [activeGame, todayDateStr, user]
@@ -331,33 +379,28 @@ export default function PolaAppPage() {
   const handleAuthenticated = useCallback(
     async (signedInUser: PolaUser) => {
       setUser(signedInUser);
-      const games: PolaGameType[] = [
-        "queens",
-        "zip",
-        "tango",
-        "mini-sudoku",
-        "patches",
-      ];
-      for (const gameType of games) {
-        const completion = getDailyCompletion(todayDateStr, gameType);
-        if (completion) {
-          await submitDailyScore({
-            user: signedInUser,
-            puzzleDate: todayDateStr,
-            gameType,
-            totalSeconds: completion.totalSeconds,
-            hintsUsed: completion.hintsUsed,
-          });
-          if (activeGame?.game === gameType && activeGame.mode === "daily") {
-            const board = await fetchDailyLeaderboard(
-              todayDateStr,
-              gameType,
-              signedInUser.id
-            );
-            const idx = board.findIndex((e) => e.isCurrentUser);
-            setDailyRank(idx >= 0 ? idx + 1 : null);
-          }
-        }
+      const currentStats = loadStats();
+      const completions: Partial<Record<PolaGameType, DailyCompletion | null>> =
+        {};
+      for (const gameType of ALL_GAME_IDS) {
+        completions[gameType] = getDailyCompletion(todayDateStr, gameType);
+      }
+
+      await syncGuestCompletionsToAccount(
+        signedInUser,
+        todayDateStr,
+        completions,
+        currentStats
+      );
+      setSyncVersion((v) => v + 1);
+
+      if (activeGame?.mode === "daily") {
+        const rank = await fetchUserDailyRank(
+          todayDateStr,
+          activeGame.game,
+          signedInUser.id
+        );
+        setDailyRank(rank);
       }
     },
     [todayDateStr, activeGame]
@@ -457,6 +500,23 @@ export default function PolaAppPage() {
             }
             onOpenAuth={() => setAuthOpen(true)}
           />
+        ) : activeGame?.game === "fold" ? (
+          <FoldGame
+            key={`${activeGame.puzzle.id}-${activeGame.mode}`}
+            puzzle={activeGame.puzzle}
+            mode={activeGame.mode}
+            dateStr={todayDateStr}
+            streak={stats.currentStreak}
+            user={user}
+            dailyRank={dailyRank}
+            reviewCompletion={activeGame.reviewCompletion ?? null}
+            onComplete={handleGameComplete}
+            onExit={() => setActiveGame(null)}
+            onPlayUnlimitedNext={() =>
+              handlePlayUnlimitedFold(activeGame.puzzle.difficulty)
+            }
+            onOpenAuth={() => setAuthOpen(true)}
+          />
         ) : (
           <div key="hub-shell" className="flex min-h-[100dvh] flex-col">
             <HeaderBar />
@@ -471,16 +531,19 @@ export default function PolaAppPage() {
                   todayTangoDifficulty={todayTangoDifficulty}
                   todayMiniSudokuDifficulty={todayMiniSudokuDifficulty}
                   todayPatchesDifficulty={todayPatchesDifficulty}
+                  todayFoldDifficulty={todayFoldDifficulty}
                   todayQueensCompletion={todayQueensCompletion}
                   todayZipCompletion={todayZipCompletion}
                   todayTangoCompletion={todayTangoCompletion}
                   todayMiniSudokuCompletion={todayMiniSudokuCompletion}
                   todayPatchesCompletion={todayPatchesCompletion}
+                  todayFoldCompletion={todayFoldCompletion}
                   onPlayDailyQueens={handlePlayDailyQueens}
                   onPlayDailyZip={handlePlayDailyZip}
                   onPlayDailyTango={handlePlayDailyTango}
                   onPlayDailyMiniSudoku={handlePlayDailyMiniSudoku}
                   onPlayDailyPatches={handlePlayDailyPatches}
+                  onPlayDailyFold={handlePlayDailyFold}
                   onGoToUnlimited={() => setActiveTab("unlimited")}
                 />
               )}
@@ -492,6 +555,7 @@ export default function PolaAppPage() {
                   onPlayUnlimitedTango={handlePlayUnlimitedTango}
                   onPlayUnlimitedMiniSudoku={handlePlayUnlimitedMiniSudoku}
                   onPlayUnlimitedPatches={handlePlayUnlimitedPatches}
+                  onPlayUnlimitedFold={handlePlayUnlimitedFold}
                 />
               )}
 
@@ -500,6 +564,7 @@ export default function PolaAppPage() {
                   user={user}
                   stats={stats}
                   todayDateStr={todayDateStr}
+                  syncVersion={syncVersion}
                   onOpenAuth={() => setAuthOpen(true)}
                   onSignOut={handleSignOut}
                 />

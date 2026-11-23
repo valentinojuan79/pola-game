@@ -1,113 +1,161 @@
--- Pola: Supabase PostgreSQL Schema
--- Auth Strategy: Username + Password (internally mapped to <username>@pola.local)
--- Run this in the Supabase SQL Editor. Make sure "Confirm email" is disabled in Auth > Providers > Email.
+-- ============================================================================
+-- Pola — Supabase PostgreSQL Schema (Idempotent, 6-Game Production Ready)
+-- ============================================================================
+-- Auth Strategy:
+--   Username + Password ONLY (internally mapped to <username>@pola.local).
+--   In Supabase Dashboard:
+--     Authentication -> Providers -> Email -> Disable "Confirm email"
+--     so players can sign up with just a username + password immediately.
+--
+-- Games supported (6):
+--   'queens', 'zip', 'tango', 'mini-sudoku', 'patches', 'fold'
+-- ============================================================================
 
 create extension if not exists "pgcrypto";
 
+-- ----------------------------------------------------------------------------
 -- 1. PROFILES
+-- ----------------------------------------------------------------------------
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
-  username text not null unique check (username ~ '^[a-zA-Z0-9_]{3,20}$'),
-  current_streak integer not null default 0,
-  longest_streak integer not null default 0,
-  last_daily_date date,
-  total_solved integer not null default 0,
+  username text not null check (username ~ '^[a-zA-Z0-9_]{3,20}$'),
+  display_name text not null check (char_length(trim(display_name)) between 1 and 30),
+  current_streak integer not null default 0 check (current_streak >= 0),
+  longest_streak integer not null default 0 check (longest_streak >= 0),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create index if not exists idx_profiles_username_lower on public.profiles (lower(username));
+-- Safe idempotent migration if upgrading from an earlier schema
+alter table public.profiles
+  add column if not exists display_name text;
+
+update public.profiles
+  set display_name = username
+  where display_name is null;
+
+alter table public.profiles
+  alter column display_name set not null;
+
+-- Case-insensitive unique username constraint
+create unique index if not exists idx_profiles_username_lower
+  on public.profiles (lower(username));
 
 alter table public.profiles enable row level security;
 
+drop policy if exists "Profiles are viewable by everyone" on public.profiles;
 create policy "Profiles are viewable by everyone"
-  on public.profiles for select
+  on public.profiles
+  for select
   using (true);
 
+drop policy if exists "Users can insert their own profile" on public.profiles;
 create policy "Users can insert their own profile"
-  on public.profiles for insert
+  on public.profiles
+  for insert
+  to authenticated
   with check (auth.uid() = id);
 
+drop policy if exists "Users can update their own profile" on public.profiles;
 create policy "Users can update their own profile"
-  on public.profiles for update
+  on public.profiles
+  for update
+  to authenticated
   using (auth.uid() = id)
   with check (auth.uid() = id);
 
--- 2. DAILY PUZZLES
-create table if not exists public.daily_puzzles (
-  id uuid primary key default gen_random_uuid(),
-  puzzle_date date not null,
-  game_type text not null check (game_type in ('queens', 'zip', 'tango', 'mini-sudoku', 'patches')),
-  difficulty text not null check (difficulty in ('easy', 'medium', 'hard', 'expert')),
-  grid_size integer not null,
-  seed text not null,
-  payload jsonb not null,
-  created_at timestamptz not null default now(),
-  unique (puzzle_date, game_type)
-);
+-- ----------------------------------------------------------------------------
+-- 2. AUTO-CREATE PROFILE TRIGGER ON AUTH SIGNUP
+-- ----------------------------------------------------------------------------
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  raw_username text;
+  clean_username text;
+  clean_display_name text;
+begin
+  raw_username := coalesce(
+    nullif(trim(new.raw_user_meta_data ->> 'username'), ''),
+    nullif(split_part(coalesce(new.email, ''), '@', 1), ''),
+    'player_' || substr(replace(new.id::text, '-', ''), 1, 8)
+  );
 
-create index if not exists idx_daily_puzzles_date_game on public.daily_puzzles (puzzle_date, game_type);
+  -- Normalize to lowercase alphanumeric/underscore, bounded to 3-20 chars
+  clean_username := lower(regexp_replace(raw_username, '[^a-zA-Z0-9_]', '', 'g'));
+  if char_length(clean_username) < 3 then
+    clean_username := 'player_' || substr(replace(new.id::text, '-', ''), 1, 8);
+  elsif char_length(clean_username) > 20 then
+    clean_username := substr(clean_username, 1, 20);
+  end if;
 
-alter table public.daily_puzzles enable row level security;
+  clean_display_name := coalesce(
+    nullif(trim(new.raw_user_meta_data ->> 'display_name'), ''),
+    nullif(trim(new.raw_user_meta_data ->> 'username'), ''),
+    clean_username
+  );
 
-create policy "Daily puzzles are readable by everyone"
-  on public.daily_puzzles for select
-  using (true);
+  insert into public.profiles (id, username, display_name)
+  values (new.id, clean_username, left(clean_display_name, 30))
+  on conflict (id) do nothing;
 
--- 3. GAME SESSIONS (Daily & Unlimited records for signed-in users)
-create table if not exists public.game_sessions (
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row
+  execute function public.handle_new_user();
+
+-- ----------------------------------------------------------------------------
+-- 3. DAILY COMPLETIONS (First valid daily solve is locked — no UPDATE/DELETE)
+-- ----------------------------------------------------------------------------
+create table if not exists public.daily_completions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
-  game_type text not null check (game_type in ('queens', 'zip', 'tango', 'mini-sudoku', 'patches')),
-  mode text not null check (mode in ('daily', 'unlimited')),
-  puzzle_date date,
-  difficulty text not null check (difficulty in ('easy', 'medium', 'hard', 'expert')),
-  elapsed_seconds integer not null check (elapsed_seconds >= 0),
-  penalty_seconds integer not null default 0 check (penalty_seconds >= 0),
-  hints_used integer not null default 0 check (hints_used >= 0),
-  completed_at timestamptz not null default now()
-);
-
-create index if not exists idx_game_sessions_user on public.game_sessions (user_id, completed_at desc);
-create index if not exists idx_game_sessions_daily on public.game_sessions (puzzle_date, game_type) where mode = 'daily';
-
-alter table public.game_sessions enable row level security;
-
-create policy "Users can view their own sessions"
-  on public.game_sessions for select
-  using (auth.uid() = user_id);
-
-create policy "Users can insert their own sessions"
-  on public.game_sessions for insert
-  with check (auth.uid() = user_id);
-
--- 4. LEADERBOARDS (1 best/first daily entry per user per game per day)
-create table if not exists public.leaderboards (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.profiles(id) on delete cascade,
-  username text not null,
+  game_id text not null check (
+    game_id in ('queens', 'zip', 'tango', 'mini-sudoku', 'patches', 'fold')
+  ),
   puzzle_date date not null,
-  game_type text not null check (game_type in ('queens', 'zip', 'tango', 'mini-sudoku', 'patches')),
-  total_seconds integer not null check (total_seconds >= 0),
+  time_seconds integer not null check (time_seconds >= 0),
   hints_used integer not null default 0 check (hints_used >= 0),
-  created_at timestamptz not null default now(),
-  unique (user_id, puzzle_date, game_type)
+  completed_at timestamptz not null default now(),
+  constraint daily_completions_user_game_date_unique unique (user_id, game_id, puzzle_date)
 );
 
-create index if not exists idx_leaderboards_ranking
-  on public.leaderboards (puzzle_date, game_type, total_seconds asc, hints_used asc, created_at asc);
+-- Ensure game_id check constraint includes all 6 games if table already existed
+alter table public.daily_completions
+  drop constraint if exists daily_completions_game_id_check;
+alter table public.daily_completions
+  add constraint daily_completions_game_id_check
+  check (game_id in ('queens', 'zip', 'tango', 'mini-sudoku', 'patches', 'fold'));
 
-alter table public.leaderboards enable row level security;
+create index if not exists idx_daily_completions_leaderboard
+  on public.daily_completions (puzzle_date, game_id, time_seconds asc, hints_used asc, completed_at asc);
 
-create policy "Leaderboards are viewable by everyone"
-  on public.leaderboards for select
+create index if not exists idx_daily_completions_date_user
+  on public.daily_completions (puzzle_date, user_id);
+
+alter table public.daily_completions enable row level security;
+
+drop policy if exists "Daily completions are viewable by everyone" on public.daily_completions;
+create policy "Daily completions are viewable by everyone"
+  on public.daily_completions
+  for select
   using (true);
 
-create policy "Users can insert their own daily leaderboard entry"
-  on public.leaderboards for insert
+drop policy if exists "Users can insert their own daily completions" on public.daily_completions;
+create policy "Users can insert their own daily completions"
+  on public.daily_completions
+  for insert
+  to authenticated
   with check (auth.uid() = user_id);
 
-create policy "Users can update their own daily leaderboard entry"
-  on public.leaderboards for update
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+-- Intentionally NO UPDATE or DELETE policies on public.daily_completions:
+-- Once a player's first valid Daily solve is recorded, it is permanently locked
+-- and cannot be overwritten by replays.

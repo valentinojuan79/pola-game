@@ -2,25 +2,29 @@
 
 import React, { useEffect, useState } from "react";
 import {
+  CheckCircle2,
   Crown,
   Flame,
   Grid3X3,
+  Layers,
   LayoutGrid,
   LogOut,
   Medal,
   Route,
   Sparkles,
   SunMoon,
+  Trophy,
   UserPlus,
-  CheckCircle2,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { feedback } from "@/lib/feedback";
-import type { LocalProfileStats, PolaGameType } from "@/lib/storage";
+import type { LocalProfileStats } from "@/lib/storage";
 import {
   fetchDailyLeaderboard,
+  fetchOverallDailyLeaderboard,
   isSupabaseConfigured,
   type LeaderboardEntry,
+  type LeaderboardFilter,
   type PolaUser,
 } from "@/lib/supabase";
 import { formatTime } from "@/lib/games/queens/engine";
@@ -29,6 +33,7 @@ interface LeaderboardHubProps {
   user: PolaUser | null;
   stats: LocalProfileStats;
   todayDateStr: string;
+  syncVersion?: number;
   onOpenAuth: () => void;
   onSignOut: () => void;
 }
@@ -37,27 +42,88 @@ export function LeaderboardHub({
   user,
   stats,
   todayDateStr,
+  syncVersion = 0,
   onOpenAuth,
   onSignOut,
 }: LeaderboardHubProps) {
   const { t } = useI18n();
-  const [selectedGame, setSelectedGame] = useState<PolaGameType>("queens");
+  const [selectedFilter, setSelectedFilter] =
+    useState<LeaderboardFilter>("overall");
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
-    fetchDailyLeaderboard(todayDateStr, selectedGame, user?.id).then((list) => {
-      if (active) {
-        setEntries(list);
-        setLoading(false);
-      }
-    });
+
+    const request =
+      selectedFilter === "overall"
+        ? fetchOverallDailyLeaderboard(todayDateStr, user?.id)
+        : fetchDailyLeaderboard(todayDateStr, selectedFilter, user?.id);
+
+    request
+      .then((list) => {
+        if (active) {
+          setEntries(list);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setEntries([]);
+          setLoading(false);
+        }
+      });
+
     return () => {
       active = false;
     };
-  }, [todayDateStr, selectedGame, user?.id, stats.totalSolved]);
+  }, [todayDateStr, selectedFilter, user?.id, stats.totalSolved, syncVersion]);
+
+  const highlightRowClass =
+    selectedFilter === "overall"
+      ? "bg-sky-500/[0.08] dark:bg-sky-400/[0.1]"
+      : selectedFilter === "zip"
+      ? "bg-sky-500/[0.08] dark:bg-sky-400/[0.08]"
+      : selectedFilter === "tango"
+      ? "bg-orange-500/[0.08] dark:bg-orange-400/[0.08]"
+      : selectedFilter === "mini-sudoku"
+      ? "bg-emerald-500/[0.08] dark:bg-emerald-400/[0.08]"
+      : selectedFilter === "patches"
+      ? "bg-rose-500/[0.08] dark:bg-rose-400/[0.08]"
+      : selectedFilter === "fold"
+      ? "bg-indigo-500/[0.08] dark:bg-indigo-400/[0.08]"
+      : "bg-amber-500/[0.08] dark:bg-amber-400/[0.08]";
+
+  const youBadgeClass =
+    selectedFilter === "overall"
+      ? "bg-sky-500/20 text-sky-800 dark:text-sky-300"
+      : selectedFilter === "zip"
+      ? "bg-sky-500/20 text-sky-800 dark:text-sky-300"
+      : selectedFilter === "tango"
+      ? "bg-orange-500/20 text-orange-800 dark:text-orange-300"
+      : selectedFilter === "mini-sudoku"
+      ? "bg-emerald-500/20 text-emerald-800 dark:text-emerald-300"
+      : selectedFilter === "patches"
+      ? "bg-rose-500/20 text-rose-800 dark:text-rose-300"
+      : selectedFilter === "fold"
+      ? "bg-indigo-500/20 text-indigo-800 dark:text-indigo-300"
+      : "bg-amber-500/20 text-amber-800 dark:text-amber-300";
+
+  const emptyMessage =
+    selectedFilter === "overall"
+      ? t.leaderboard.emptyBoardOverall
+      : selectedFilter === "zip"
+      ? t.leaderboard.emptyBoardZip
+      : selectedFilter === "tango"
+      ? t.leaderboard.emptyBoardTango
+      : selectedFilter === "mini-sudoku"
+      ? t.leaderboard.emptyBoardMiniSudoku
+      : selectedFilter === "patches"
+      ? t.leaderboard.emptyBoardPatches
+      : selectedFilter === "fold"
+      ? t.leaderboard.emptyBoardFold
+      : t.leaderboard.emptyBoard;
 
   return (
     <div className="px-5 pt-2 pb-28">
@@ -76,7 +142,7 @@ export function LeaderboardHub({
               {t.leaderboard.yourProfile}
             </p>
             <h2 className="font-display mt-0.5 text-[19px] font-bold text-neutral-950 dark:text-white">
-              {user ? `@${user.username}` : t.leaderboard.guestTitle}
+              {user ? `@${user.displayName}` : t.leaderboard.guestTitle}
             </h2>
           </div>
 
@@ -146,7 +212,7 @@ export function LeaderboardHub({
         </div>
       </div>
 
-      {/* Daily Leaderboard Section with Game-Colored Switcher */}
+      {/* Daily Leaderboard Section with Overall + 6-Game Switcher */}
       <div className="mt-6">
         <div className="mb-3 flex flex-col gap-2">
           <div className="flex items-center justify-between px-0.5">
@@ -163,10 +229,25 @@ export function LeaderboardHub({
               type="button"
               onClick={() => {
                 feedback.click();
-                setSelectedGame("queens");
+                setSelectedFilter("overall");
               }}
               className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition-all ${
-                selectedGame === "queens"
+                selectedFilter === "overall"
+                  ? "border-sky-500/40 bg-sky-500/[0.14] text-sky-950 dark:border-sky-400/35 dark:bg-sky-400/[0.18] dark:text-sky-100"
+                  : "border-transparent text-neutral-600 hover:text-sky-800 dark:text-neutral-300"
+              }`}
+            >
+              <Trophy className="h-3.5 w-3.5" />
+              {t.leaderboard.overall}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                feedback.click();
+                setSelectedFilter("queens");
+              }}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition-all ${
+                selectedFilter === "queens"
                   ? "border-amber-500/40 bg-amber-500/[0.14] text-amber-950 dark:border-amber-400/35 dark:bg-amber-400/[0.18] dark:text-amber-100"
                   : "border-transparent text-neutral-600 hover:text-amber-800 dark:text-neutral-300"
               }`}
@@ -178,10 +259,10 @@ export function LeaderboardHub({
               type="button"
               onClick={() => {
                 feedback.click();
-                setSelectedGame("zip");
+                setSelectedFilter("zip");
               }}
               className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition-all ${
-                selectedGame === "zip"
+                selectedFilter === "zip"
                   ? "border-sky-500/40 bg-sky-500/[0.14] text-sky-950 dark:border-sky-400/35 dark:bg-sky-400/[0.18] dark:text-sky-100"
                   : "border-transparent text-neutral-600 hover:text-sky-800 dark:text-neutral-300"
               }`}
@@ -193,10 +274,10 @@ export function LeaderboardHub({
               type="button"
               onClick={() => {
                 feedback.click();
-                setSelectedGame("tango");
+                setSelectedFilter("tango");
               }}
               className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition-all ${
-                selectedGame === "tango"
+                selectedFilter === "tango"
                   ? "border-orange-500/40 bg-orange-500/[0.14] text-orange-950 dark:border-orange-400/35 dark:bg-orange-400/[0.18] dark:text-orange-100"
                   : "border-transparent text-neutral-600 hover:text-orange-800 dark:text-neutral-300"
               }`}
@@ -208,10 +289,10 @@ export function LeaderboardHub({
               type="button"
               onClick={() => {
                 feedback.click();
-                setSelectedGame("mini-sudoku");
+                setSelectedFilter("mini-sudoku");
               }}
               className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition-all ${
-                selectedGame === "mini-sudoku"
+                selectedFilter === "mini-sudoku"
                   ? "border-emerald-500/40 bg-emerald-500/[0.14] text-emerald-950 dark:border-emerald-400/35 dark:bg-emerald-400/[0.18] dark:text-emerald-100"
                   : "border-transparent text-neutral-600 hover:text-emerald-800 dark:text-neutral-300"
               }`}
@@ -223,10 +304,10 @@ export function LeaderboardHub({
               type="button"
               onClick={() => {
                 feedback.click();
-                setSelectedGame("patches");
+                setSelectedFilter("patches");
               }}
               className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition-all ${
-                selectedGame === "patches"
+                selectedFilter === "patches"
                   ? "border-rose-500/40 bg-rose-500/[0.14] text-rose-950 dark:border-rose-400/35 dark:bg-rose-400/[0.18] dark:text-rose-100"
                   : "border-transparent text-neutral-600 hover:text-rose-800 dark:text-neutral-300"
               }`}
@@ -234,25 +315,46 @@ export function LeaderboardHub({
               <LayoutGrid className="h-3.5 w-3.5" />
               {t.games.patches.name}
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                feedback.click();
+                setSelectedFilter("fold");
+              }}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition-all ${
+                selectedFilter === "fold"
+                  ? "border-indigo-500/40 bg-indigo-500/[0.14] text-indigo-950 dark:border-indigo-400/35 dark:bg-indigo-400/[0.18] dark:text-indigo-100"
+                  : "border-transparent text-neutral-600 hover:text-indigo-800 dark:text-neutral-300"
+              }`}
+            >
+              <Layers className="h-3.5 w-3.5" />
+              {t.games.fold.name}
+            </button>
           </div>
         </div>
 
         <div className="glass-card overflow-hidden rounded-[24px]">
           {loading ? (
-            <div className="p-6 text-center text-[13px] text-neutral-400">
-              Loading...
+            <div
+              className="divide-y divide-black/[0.05] dark:divide-white/[0.06]"
+              aria-label={t.leaderboard.loading}
+            >
+              {[0, 1, 2, 3].map((row) => (
+                <div
+                  key={row}
+                  className="flex items-center justify-between px-4 py-3.5"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-7 w-7 animate-pulse rounded-full bg-black/[0.06] dark:bg-white/[0.08]" />
+                    <div className="h-4 w-28 animate-pulse rounded-full bg-black/[0.06] dark:bg-white/[0.08]" />
+                  </div>
+                  <div className="h-4 w-12 animate-pulse rounded-full bg-black/[0.06] dark:bg-white/[0.08]" />
+                </div>
+              ))}
             </div>
           ) : entries.length === 0 ? (
-            <div className="p-6 text-center text-[13px] text-neutral-500 dark:text-neutral-400">
-              {selectedGame === "zip"
-                ? t.leaderboard.emptyBoardZip
-                : selectedGame === "tango"
-                ? t.leaderboard.emptyBoardTango
-                : selectedGame === "mini-sudoku"
-                ? t.leaderboard.emptyBoardMiniSudoku
-                : selectedGame === "patches"
-                ? t.leaderboard.emptyBoardPatches
-                : t.leaderboard.emptyBoard}
+            <div className="p-7 text-center text-[13px] leading-relaxed text-neutral-500 dark:text-neutral-400">
+              {emptyMessage}
             </div>
           ) : (
             <ul className="divide-y divide-black/[0.06] dark:divide-white/[0.07]">
@@ -260,44 +362,24 @@ export function LeaderboardHub({
                 <li
                   key={entry.id}
                   className={`flex items-center justify-between px-4 py-3 ${
-                    entry.isCurrentUser
-                      ? selectedGame === "zip"
-                        ? "bg-sky-500/[0.08] dark:bg-sky-400/[0.08]"
-                        : selectedGame === "tango"
-                        ? "bg-orange-500/[0.08] dark:bg-orange-400/[0.08]"
-                        : selectedGame === "mini-sudoku"
-                        ? "bg-emerald-500/[0.08] dark:bg-emerald-400/[0.08]"
-                        : selectedGame === "patches"
-                        ? "bg-rose-500/[0.08] dark:bg-rose-400/[0.08]"
-                        : "bg-amber-500/[0.08] dark:bg-amber-400/[0.08]"
-                      : ""
+                    entry.isCurrentUser ? highlightRowClass : ""
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black/[0.05] text-[12px] font-semibold tabular-nums text-neutral-700 dark:bg-white/[0.08] dark:text-neutral-200">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black/[0.05] text-[12px] font-semibold tabular-nums text-neutral-700 dark:bg-white/[0.08] dark:text-neutral-200">
                       {idx === 0 ? (
                         <Medal className="h-4 w-4 text-amber-500" />
                       ) : (
                         idx + 1
                       )}
                     </span>
-                    <div>
-                      <span className="text-[14px] font-semibold text-neutral-900 dark:text-white">
-                        @{entry.username}
+                    <div className="flex min-w-0 items-center">
+                      <span className="truncate text-[14px] font-semibold text-neutral-900 dark:text-white">
+                        @{entry.displayName}
                       </span>
                       {entry.isCurrentUser && (
                         <span
-                          className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                            selectedGame === "zip"
-                              ? "bg-sky-500/20 text-sky-800 dark:text-sky-300"
-                              : selectedGame === "tango"
-                              ? "bg-orange-500/20 text-orange-800 dark:text-orange-300"
-                              : selectedGame === "mini-sudoku"
-                              ? "bg-emerald-500/20 text-emerald-800 dark:text-emerald-300"
-                              : selectedGame === "patches"
-                              ? "bg-rose-500/20 text-rose-800 dark:text-rose-300"
-                              : "bg-amber-500/20 text-amber-800 dark:text-amber-300"
-                          }`}
+                          className={`ml-1.5 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${youBadgeClass}`}
                         >
                           {t.leaderboard.you}
                         </span>
@@ -305,7 +387,19 @@ export function LeaderboardHub({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex shrink-0 items-center gap-2">
+                    {selectedFilter === "overall" &&
+                      typeof entry.gamesSolved === "number" && (
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums ${
+                            entry.gamesSolved === 6
+                              ? "bg-emerald-500/15 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300"
+                              : "bg-black/[0.05] text-neutral-600 dark:bg-white/[0.08] dark:text-neutral-300"
+                          }`}
+                        >
+                          {entry.gamesSolved}/6
+                        </span>
+                      )}
                     {entry.hintsUsed > 0 && (
                       <span className="text-[11px] tabular-nums text-neutral-400">
                         {entry.hintsUsed}h

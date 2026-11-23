@@ -56,6 +56,13 @@ const ACCENT_STYLES: Record<
       "bg-[#E11D48] text-white shadow-[0_4px_14px_-4px_rgba(225,29,72,0.28)] hover:bg-[#BE123C] dark:bg-rose-400/90 dark:text-neutral-950 dark:hover:bg-rose-300",
     checkColor: "text-rose-600 dark:text-rose-400",
   },
+  fold: {
+    borderTint:
+      "border-indigo-500/25 bg-gradient-to-br from-indigo-500/[0.06] via-white/75 to-white/65 dark:border-indigo-400/20 dark:from-indigo-500/[0.09] dark:via-neutral-900/65 dark:to-neutral-900/60",
+    primaryBtn:
+      "bg-[#4F46E5] text-white shadow-[0_4px_14px_-4px_rgba(79,70,229,0.28)] hover:bg-[#4338CA] dark:bg-indigo-400/90 dark:text-neutral-950 dark:hover:bg-indigo-300",
+    checkColor: "text-indigo-600 dark:text-indigo-400",
+  },
 };
 
 export function DailyReviewBar({
@@ -77,7 +84,9 @@ export function DailyReviewBar({
       ? t.review.crushedTango
       : game === "mini-sudoku"
       ? t.review.crushedMiniSudoku
-      : t.review.crushedPatches;
+      : game === "patches"
+      ? t.review.crushedPatches
+      : t.review.crushedFold;
 
   const handleShare = async () => {
     feedback.pop();

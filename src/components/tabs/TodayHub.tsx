@@ -13,6 +13,7 @@ import {
   Sparkles,
   SunMoon,
   Grid3X3,
+  Layers,
   LayoutGrid,
   Play,
   Trophy,
@@ -34,6 +35,10 @@ import {
   PATCHES_DIFFICULTY_TO_SIZE,
   type PatchesDifficulty,
 } from "@/lib/games/patches/types";
+import {
+  FOLD_DIFFICULTY_TO_SIZE,
+  type FoldDifficulty,
+} from "@/lib/games/fold/types";
 import { formatTime } from "@/lib/games/queens/engine";
 
 interface TodayHubProps {
@@ -44,16 +49,19 @@ interface TodayHubProps {
   todayTangoDifficulty: TangoDifficulty;
   todayMiniSudokuDifficulty: MiniSudokuDifficulty;
   todayPatchesDifficulty: PatchesDifficulty;
+  todayFoldDifficulty: FoldDifficulty;
   todayQueensCompletion: DailyCompletion | null;
   todayZipCompletion: DailyCompletion | null;
   todayTangoCompletion: DailyCompletion | null;
   todayMiniSudokuCompletion: DailyCompletion | null;
   todayPatchesCompletion: DailyCompletion | null;
+  todayFoldCompletion: DailyCompletion | null;
   onPlayDailyQueens: () => void;
   onPlayDailyZip: () => void;
   onPlayDailyTango: () => void;
   onPlayDailyMiniSudoku: () => void;
   onPlayDailyPatches: () => void;
+  onPlayDailyFold: () => void;
   onGoToUnlimited: () => void;
 }
 
@@ -88,16 +96,19 @@ export function TodayHub({
   todayTangoDifficulty,
   todayMiniSudokuDifficulty,
   todayPatchesDifficulty,
+  todayFoldDifficulty,
   todayQueensCompletion,
   todayZipCompletion,
   todayTangoCompletion,
   todayMiniSudokuCompletion,
   todayPatchesCompletion,
+  todayFoldCompletion,
   onPlayDailyQueens,
   onPlayDailyZip,
   onPlayDailyTango,
   onPlayDailyMiniSudoku,
   onPlayDailyPatches,
+  onPlayDailyFold,
   onGoToUnlimited,
 }: TodayHubProps) {
   const { locale, t } = useI18n();
@@ -108,7 +119,8 @@ export function TodayHub({
       todayZipCompletion &&
       todayTangoCompletion &&
       todayMiniSudokuCompletion &&
-      todayPatchesCompletion
+      todayPatchesCompletion &&
+      todayFoldCompletion
   );
 
   const combinedTotalSeconds = allCleared
@@ -116,7 +128,8 @@ export function TodayHub({
       (todayZipCompletion?.totalSeconds ?? 0) +
       (todayTangoCompletion?.totalSeconds ?? 0) +
       (todayMiniSudokuCompletion?.totalSeconds ?? 0) +
-      (todayPatchesCompletion?.totalSeconds ?? 0)
+      (todayPatchesCompletion?.totalSeconds ?? 0) +
+      (todayFoldCompletion?.totalSeconds ?? 0)
     : 0;
 
   // Client-side countdown to midnight (never runs during SSR -> zero hydration mismatch)
@@ -159,6 +172,9 @@ export function TodayHub({
   const patchesGridSize = PATCHES_DIFFICULTY_TO_SIZE[todayPatchesDifficulty];
   const patchesDiffLabel =
     t.unlimited.patchesDifficulties[todayPatchesDifficulty].label;
+  const foldGridSize = FOLD_DIFFICULTY_TO_SIZE[todayFoldDifficulty];
+  const foldDiffLabel =
+    t.unlimited.foldDifficulties[todayFoldDifficulty].label;
 
   return (
     <div className="px-5 pt-3 pb-28">
@@ -208,7 +224,7 @@ export function TodayHub({
               <div className="flex items-center gap-1.5">
                 <Sparkles className="h-3.5 w-3.5 text-amber-500" />
                 <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-                  5 / 5 {t.today.completed}
+                  6 / 6 {t.today.completed}
                 </span>
               </div>
               <h2 className="font-display mt-0.5 text-[18px] font-bold leading-snug tracking-tight text-neutral-950 dark:text-white">
@@ -534,6 +550,58 @@ export function TodayHub({
             )}
 
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-500/[0.10] text-rose-800 transition-transform group-hover:translate-x-0.5 dark:bg-rose-400/15 dark:text-rose-300">
+              <ChevronRight className="h-4 w-4" />
+            </span>
+          </div>
+        </motion.button>
+
+        {/* Game #6: Fold (Soft Lavender / Periwinkle Tinted Glass) */}
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.985 }}
+          onClick={() => {
+            feedback.pop();
+            onPlayDailyFold();
+          }}
+          className="glass-card group relative flex w-full flex-col gap-4 overflow-hidden rounded-[26px] border-indigo-600/[0.18] bg-gradient-to-br from-indigo-500/[0.06] via-white/75 to-violet-500/[0.04] p-5 text-left transition-all hover:-translate-y-0.5 hover:border-indigo-600/35 hover:shadow-[0_10px_24px_-8px_rgba(79,70,229,0.14)] dark:border-indigo-400/[0.16] dark:from-indigo-500/[0.09] dark:via-neutral-900/60 dark:to-violet-500/[0.07] dark:hover:border-indigo-400/30"
+        >
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-indigo-500/[0.12] text-indigo-700 border border-indigo-600/20 shadow-xs dark:bg-indigo-400/15 dark:text-indigo-300 dark:border-indigo-400/20">
+              <Layers className="h-7 w-7 stroke-[2]" />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-display text-[19px] font-bold tracking-tight text-neutral-950 dark:text-white">
+                  {t.games.fold.name}
+                </span>
+                <span className="rounded-full bg-indigo-500/[0.11] px-2.5 py-0.5 text-[11px] font-semibold text-indigo-900 dark:bg-indigo-400/15 dark:text-indigo-200">
+                  {foldGridSize}×{foldGridSize} · {foldDiffLabel}
+                </span>
+              </div>
+              <p className="mt-0.5 text-[13px] leading-snug text-neutral-600 dark:text-neutral-400">
+                {t.games.fold.tagline}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-black/[0.05] pt-3.5 dark:border-white/[0.07]">
+            {todayFoldCompletion ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600/[0.12] px-3 py-1.5 text-[12px] font-semibold text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300">
+                <CheckCircle2 className="h-4 w-4" />
+                {t.today.completed} ·{" "}
+                <span className="font-display tabular-nums">
+                  {formatTime(todayFoldCompletion.totalSeconds)}
+                </span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#4F46E5] px-4 py-2 text-[12.5px] font-semibold text-white shadow-[0_4px_12px_-3px_rgba(79,70,229,0.28)] transition-colors group-hover:bg-[#4338CA] dark:bg-indigo-400/90 dark:text-neutral-950">
+                <Play className="h-3.5 w-3.5 fill-current" />
+                {t.today.play}
+              </span>
+            )}
+
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500/[0.10] text-indigo-800 transition-transform group-hover:translate-x-0.5 dark:bg-indigo-400/15 dark:text-indigo-300">
               <ChevronRight className="h-4 w-4" />
             </span>
           </div>

@@ -9,6 +9,7 @@ import {
   Flame,
   Grid3X3,
   Infinity as InfinityIcon,
+  Layers,
   LayoutGrid,
   Lightbulb,
   Route,
@@ -117,6 +118,8 @@ export function WinModal({
                   ? "bg-emerald-500/18 text-emerald-600 dark:bg-emerald-400/18 dark:text-emerald-300 border-emerald-500/25"
                   : game === "patches"
                   ? "bg-rose-500/18 text-rose-600 dark:bg-rose-400/18 dark:text-rose-300 border-rose-500/25"
+                  : game === "fold"
+                  ? "bg-indigo-500/18 text-indigo-600 dark:bg-indigo-400/18 dark:text-indigo-300 border-indigo-500/25"
                   : "bg-amber-500/18 text-amber-600 dark:bg-amber-400/18 dark:text-amber-300 border-amber-500/25"
               }`}
             >
@@ -128,6 +131,8 @@ export function WinModal({
                 <Grid3X3 className="h-7 w-7 stroke-[2.2]" />
               ) : game === "patches" ? (
                 <LayoutGrid className="h-7 w-7 stroke-[2.2]" />
+              ) : game === "fold" ? (
+                <Layers className="h-7 w-7 stroke-[2.2]" />
               ) : (
                 <Crown className="h-7 w-7 fill-current" />
               )}
@@ -153,6 +158,10 @@ export function WinModal({
                 ? mode === "daily"
                   ? t.win.subtitleDailyPatches
                   : t.win.subtitleUnlimitedPatches
+                : game === "fold"
+                ? mode === "daily"
+                  ? t.win.subtitleDailyFold
+                  : t.win.subtitleUnlimitedFold
                 : mode === "daily"
                 ? t.win.subtitleDaily
                 : t.win.subtitleUnlimited}
@@ -197,10 +206,10 @@ export function WinModal({
                 {user ? (
                   <div className="flex items-center justify-between text-[12px]">
                     <span className="text-neutral-500 dark:text-neutral-400">
-                      {t.win.rank} (@{user.username})
+                      {t.win.rank} (@{user.displayName})
                     </span>
                     <span className="tabular-nums font-semibold text-neutral-900 dark:text-white">
-                      {dailyRank ? `#${dailyRank}` : "#1"}
+                      {dailyRank ? `#${dailyRank}` : t.win.rankSyncing}
                     </span>
                   </div>
                 ) : (
@@ -223,6 +232,8 @@ export function WinModal({
                           ? "bg-[#059669] hover:bg-[#047857] dark:bg-emerald-400/90"
                           : game === "patches"
                           ? "bg-[#E11D48] hover:bg-[#BE123C] dark:bg-rose-400/90"
+                          : game === "fold"
+                          ? "bg-[#4F46E5] hover:bg-[#4338CA] dark:bg-indigo-400/90"
                           : "bg-[#D97706] hover:bg-[#B45309] dark:bg-amber-500/90"
                       }`}
                     >
@@ -248,6 +259,8 @@ export function WinModal({
                     ? "bg-[#059669] shadow-[0_4px_14px_-4px_rgba(5,150,105,0.3)] hover:bg-[#047857] dark:bg-emerald-400/90 dark:hover:bg-emerald-300"
                     : game === "patches"
                     ? "bg-[#E11D48] shadow-[0_4px_14px_-4px_rgba(225,29,72,0.3)] hover:bg-[#BE123C] dark:bg-rose-400/90 dark:hover:bg-rose-300"
+                    : game === "fold"
+                    ? "bg-[#4F46E5] shadow-[0_4px_14px_-4px_rgba(79,70,229,0.3)] hover:bg-[#4338CA] dark:bg-indigo-400/90 dark:hover:bg-indigo-300"
                     : "bg-[#D97706] shadow-[0_4px_14px_-4px_rgba(180,83,9,0.3)] hover:bg-[#B45309] dark:bg-amber-500/90 dark:hover:bg-amber-400"
                 }`}
               >

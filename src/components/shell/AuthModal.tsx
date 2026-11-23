@@ -7,8 +7,10 @@ import { useI18n } from "@/lib/i18n";
 import { feedback } from "@/lib/feedback";
 import {
   isSupabaseConfigured,
+  isValidUsername,
   signInWithUsername,
   signUpWithUsername,
+  type AuthErrorCode,
   type PolaUser,
 } from "@/lib/supabase";
 
@@ -23,12 +25,24 @@ export function AuthModal({ open, onClose, onAuthenticated }: AuthModalProps) {
   const [mode, setMode] = useState<"signup" | "signin">("signup");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<AuthErrorCode | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setErrorCode(null);
+
+    if (!isValidUsername(username)) {
+      feedback.warn();
+      setErrorCode("invalid_username");
+      return;
+    }
+    if (password.length < 6) {
+      feedback.warn();
+      setErrorCode("password_too_short");
+      return;
+    }
+
     setLoading(true);
     feedback.click();
 
@@ -39,9 +53,9 @@ export function AuthModal({ open, onClose, onAuthenticated }: AuthModalProps) {
 
     setLoading(false);
 
-    if (result.error || !result.user) {
+    if (result.errorCode || !result.user) {
       feedback.warn();
-      setError(result.error ?? "Authentication failed.");
+      setErrorCode(result.errorCode ?? "unknown");
       return;
     }
 
@@ -140,9 +154,12 @@ export function AuthModal({ open, onClose, onAuthenticated }: AuthModalProps) {
                 </div>
               </div>
 
-              {error && (
-                <p className="rounded-xl bg-red-500/10 px-3 py-2 text-[12px] font-medium text-red-600 dark:text-red-400">
-                  {error}
+              {errorCode && (
+                <p
+                  role="alert"
+                  className="rounded-xl bg-red-500/10 px-3 py-2 text-[12px] font-medium text-red-600 dark:text-red-400"
+                >
+                  {t.auth.errors[errorCode]}
                 </p>
               )}
 
@@ -160,7 +177,7 @@ export function AuthModal({ open, onClose, onAuthenticated }: AuthModalProps) {
               type="button"
               onClick={() => {
                 feedback.click();
-                setError(null);
+                setErrorCode(null);
                 setMode(mode === "signup" ? "signin" : "signup");
               }}
               className="mt-4 w-full text-center text-[12px] font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
