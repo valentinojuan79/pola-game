@@ -1,8 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-outfit",
+  display: "swap",
+});
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -43,7 +50,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${plusJakartaSans.variable} font-sans`}
+      className={`${outfit.variable} ${plusJakartaSans.variable} font-sans`}
       suppressHydrationWarning
     >
       <head>
@@ -53,18 +60,20 @@ export default function RootLayout({
           content="black-translucent"
         />
       </head>
-      <body className="font-sans relative min-h-[100dvh] bg-[#F2F4F8] text-neutral-900 antialiased selection:bg-sky-500/20 dark:bg-[#090B10] dark:text-neutral-100">
+      <body className="font-sans relative min-h-[100dvh] bg-[#F4F6FA] text-neutral-900 antialiased selection:bg-sky-500/20 dark:bg-[#090B10] dark:text-neutral-100">
         {/* Ambient blurred iOS Liquid Glass refraction orbs (fixed behind layout) */}
         <div
           aria-hidden="true"
           className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
         >
-          {/* Top-left soft sky blue orb */}
-          <div className="absolute -top-24 -left-20 h-[340px] w-[340px] rounded-full bg-sky-300/45 blur-[88px] dark:bg-cyan-500/18" />
-          {/* Mid-right fresh mint orb */}
-          <div className="absolute top-[28%] -right-24 h-[320px] w-[320px] rounded-full bg-emerald-300/35 blur-[92px] dark:bg-emerald-500/14" />
-          {/* Lower-left warm peach orb */}
-          <div className="absolute bottom-[-60px] left-[8%] h-[300px] w-[300px] rounded-full bg-orange-200/45 blur-[90px] dark:bg-sky-600/14" />
+          {/* Top-left soft sky orb */}
+          <div className="absolute -top-24 -left-20 h-[360px] w-[360px] rounded-full bg-sky-300/35 blur-[92px] dark:bg-sky-500/18" />
+          {/* Top-right soft warm amber orb */}
+          <div className="absolute top-[14%] -right-24 h-[330px] w-[330px] rounded-full bg-amber-200/40 blur-[94px] dark:bg-amber-500/12" />
+          {/* Mid-left soft mint orb */}
+          <div className="absolute top-[52%] -left-24 h-[310px] w-[310px] rounded-full bg-emerald-200/35 blur-[96px] dark:bg-emerald-500/14" />
+          {/* Lower-right soft rose orb */}
+          <div className="absolute -bottom-16 right-[4%] h-[300px] w-[300px] rounded-full bg-rose-200/35 blur-[94px] dark:bg-cyan-600/14" />
         </div>
 
         <ThemeProvider>

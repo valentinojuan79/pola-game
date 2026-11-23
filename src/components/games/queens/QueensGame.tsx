@@ -243,7 +243,7 @@ export function QueensGame({
           </span>
 
           <div className="relative mt-0.5 flex items-center justify-center">
-            <span className="tabular-nums text-[20px] font-bold tracking-tight text-neutral-950 dark:text-white">
+            <span className="font-display tabular-nums text-[22px] font-bold tracking-tight text-neutral-950 dark:text-white">
               {formatTime(totalSeconds)}
             </span>
 
@@ -319,7 +319,7 @@ export function QueensGame({
           onClick={handleToggleAutoX}
           className={`flex flex-col items-center justify-center gap-1 rounded-[20px] border py-3 text-[11px] font-medium transition-all active:scale-95 ${
             autoX
-              ? "border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-neutral-950"
+              ? "border-amber-500/45 bg-amber-500/[0.14] text-amber-950 dark:border-amber-400/40 dark:bg-amber-400/[0.18] dark:text-amber-100"
               : "glass-card text-neutral-700 dark:text-neutral-300"
           }`}
         >
@@ -378,7 +378,7 @@ export function QueensGame({
                 <X className="h-4 w-4" />
               </button>
 
-              <h3 className="text-[19px] font-semibold text-neutral-950 dark:text-white">
+              <h3 className="font-display text-[20px] font-bold text-neutral-950 dark:text-white">
                 {t.queens.howToPlay}
               </h3>
               <ul className="mt-4 space-y-2.5 text-[13px] leading-relaxed text-neutral-600 dark:text-neutral-300">
@@ -394,7 +394,7 @@ export function QueensGame({
                   feedback.click();
                   setShowRules(false);
                 }}
-                className="mt-5 w-full rounded-2xl bg-neutral-950 py-3 text-[14px] font-semibold text-white dark:bg-white dark:text-neutral-950"
+                className="mt-5 w-full rounded-2xl bg-[#D97706] py-3 text-[14px] font-semibold text-white shadow-[0_4px_14px_-4px_rgba(180,83,9,0.28)] transition-colors hover:bg-[#B45309] active:scale-[0.98] dark:bg-amber-500/90 dark:text-neutral-950"
               >
                 {t.queens.gotIt}
               </button>

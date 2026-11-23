@@ -9,6 +9,7 @@ import {
   Flame,
   Infinity as InfinityIcon,
   Lightbulb,
+  Route,
   Share2,
   UserPlus,
 } from "lucide-react";
@@ -16,9 +17,11 @@ import { useI18n } from "@/lib/i18n";
 import { feedback } from "@/lib/feedback";
 import { formatTime } from "@/lib/games/queens/engine";
 import type { PolaUser } from "@/lib/supabase";
+import type { PolaGameType } from "@/lib/storage";
 
 interface WinModalProps {
   open: boolean;
+  game?: PolaGameType;
   mode: "daily" | "unlimited";
   totalSeconds: number;
   hintsUsed: number;
@@ -33,6 +36,7 @@ interface WinModalProps {
 
 export function WinModal({
   open,
+  game = "queens",
   mode,
   totalSeconds,
   hintsUsed,
@@ -91,7 +95,7 @@ export function WinModal({
             }}
             className="glass-modal relative z-10 w-full max-w-[360px] rounded-[30px] p-6 text-center"
           >
-            {/* Crown emblem */}
+            {/* Game emblem */}
             <motion.div
               initial={{ scale: 0.5, rotate: -12 }}
               animate={{ scale: 1, rotate: 0 }}
@@ -101,23 +105,37 @@ export function WinModal({
                 damping: 18,
                 delay: 0.08,
               }}
-              className="mx-auto flex h-14 w-14 items-center justify-center rounded-[20px] bg-amber-500/18 text-amber-600 dark:bg-amber-400/18 dark:text-amber-300 border border-amber-500/25"
+              className={`mx-auto flex h-14 w-14 items-center justify-center rounded-[20px] border ${
+                game === "zip"
+                  ? "bg-sky-500/18 text-sky-600 dark:bg-sky-400/18 dark:text-sky-300 border-sky-500/25"
+                  : "bg-amber-500/18 text-amber-600 dark:bg-amber-400/18 dark:text-amber-300 border-amber-500/25"
+              }`}
             >
-              <Crown className="h-7 w-7 fill-current" />
+              {game === "zip" ? (
+                <Route className="h-7 w-7 stroke-[2.2]" />
+              ) : (
+                <Crown className="h-7 w-7 fill-current" />
+              )}
             </motion.div>
 
-            <h2 className="mt-4 text-[22px] font-semibold tracking-tight text-neutral-950 dark:text-white">
+            <h2 className="font-display mt-4 text-[24px] font-bold tracking-tight text-neutral-950 dark:text-white">
               {t.win.title}
             </h2>
             <p className="mt-0.5 text-[13px] text-neutral-500 dark:text-neutral-400">
-              {mode === "daily" ? t.win.subtitleDaily : t.win.subtitleUnlimited}
+              {game === "zip"
+                ? mode === "daily"
+                  ? t.win.subtitleDailyZip
+                  : t.win.subtitleUnlimitedZip
+                : mode === "daily"
+                ? t.win.subtitleDaily
+                : t.win.subtitleUnlimited}
             </p>
 
             {/* 3 Stat Pills */}
             <div className="mt-5 grid grid-cols-3 gap-2">
               <div className="rounded-2xl bg-black/[0.04] p-3 dark:bg-white/[0.06]">
                 <Clock className="mx-auto h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-                <div className="mt-1 tabular-nums text-[17px] font-semibold text-neutral-950 dark:text-white">
+                <div className="font-display mt-1 tabular-nums text-[18px] font-bold text-neutral-950 dark:text-white">
                   {formatTime(totalSeconds)}
                 </div>
                 <div className="text-[11px] text-neutral-500 dark:text-neutral-400">
@@ -127,7 +145,7 @@ export function WinModal({
 
               <div className="rounded-2xl bg-black/[0.04] p-3 dark:bg-white/[0.06]">
                 <Lightbulb className="mx-auto h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-                <div className="mt-1 tabular-nums text-[17px] font-semibold text-neutral-950 dark:text-white">
+                <div className="font-display mt-1 tabular-nums text-[18px] font-bold text-neutral-950 dark:text-white">
                   {hintsUsed}
                 </div>
                 <div className="text-[11px] text-neutral-500 dark:text-neutral-400">
@@ -137,7 +155,7 @@ export function WinModal({
 
               <div className="rounded-2xl bg-black/[0.04] p-3 dark:bg-white/[0.06]">
                 <Flame className="mx-auto h-4 w-4 text-amber-500" />
-                <div className="mt-1 tabular-nums text-[17px] font-semibold text-neutral-950 dark:text-white">
+                <div className="font-display mt-1 tabular-nums text-[18px] font-bold text-neutral-950 dark:text-white">
                   {streak}
                 </div>
                 <div className="text-[11px] text-neutral-500 dark:text-neutral-400">
@@ -169,7 +187,11 @@ export function WinModal({
                         feedback.click();
                         onClaimUsername();
                       }}
-                      className="flex shrink-0 items-center gap-1 rounded-full bg-neutral-900 px-2.5 py-1.5 text-[11px] font-semibold text-white dark:bg-white dark:text-neutral-950"
+                      className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-semibold text-white shadow-xs transition-colors active:scale-95 dark:text-neutral-950 ${
+                        game === "zip"
+                          ? "bg-[#0369A1] hover:bg-[#075985] dark:bg-sky-400/90"
+                          : "bg-[#D97706] hover:bg-[#B45309] dark:bg-amber-500/90"
+                      }`}
                     >
                       <UserPlus className="h-3 w-3" />
                       {t.win.claimUsername}
@@ -184,11 +206,15 @@ export function WinModal({
               <button
                 type="button"
                 onClick={handleShare}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-neutral-950 py-3.5 text-[14px] font-semibold text-white transition-transform active:scale-[0.98] dark:bg-white dark:text-neutral-950"
+                className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[14px] font-semibold text-white transition-all active:scale-[0.98] dark:text-neutral-950 ${
+                  game === "zip"
+                    ? "bg-[#0369A1] shadow-[0_4px_14px_-4px_rgba(3,105,161,0.3)] hover:bg-[#075985] dark:bg-sky-400/90 dark:hover:bg-sky-300"
+                    : "bg-[#D97706] shadow-[0_4px_14px_-4px_rgba(180,83,9,0.3)] hover:bg-[#B45309] dark:bg-amber-500/90 dark:hover:bg-amber-400"
+                }`}
               >
                 {copied ? (
                   <>
-                    <Check className="h-4 w-4 text-emerald-400 dark:text-emerald-600" />
+                    <Check className="h-4 w-4 text-white dark:text-neutral-950" />
                     {t.win.copied}
                   </>
                 ) : (

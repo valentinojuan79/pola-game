@@ -1,8 +1,10 @@
 // Guest-first localStorage persistence for Pola
 
+export type PolaGameType = "queens" | "zip";
+
 export interface DailyCompletion {
   date: string; // YYYY-MM-DD
-  game: "queens";
+  game: PolaGameType;
   elapsedSeconds: number;
   penaltySeconds: number;
   totalSeconds: number;
@@ -72,7 +74,7 @@ export function saveStats(stats: LocalProfileStats): void {
 
 export function recordGameCompletion(params: {
   mode: "daily" | "unlimited";
-  game: "queens";
+  game: PolaGameType;
   date: string;
   elapsedSeconds: number;
   penaltySeconds: number;
@@ -121,7 +123,7 @@ export function recordGameCompletion(params: {
 
 export function getDailyCompletion(
   date: string,
-  game: "queens"
+  game: PolaGameType
 ): DailyCompletion | null {
   const stats = loadStats();
   return stats.dailyCompletions[`${date}:${game}`] ?? null;

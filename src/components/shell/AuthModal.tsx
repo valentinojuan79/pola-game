@@ -83,7 +83,7 @@ export function AuthModal({ open, onClose, onAuthenticated }: AuthModalProps) {
               <X className="h-4 w-4" />
             </button>
 
-            <h2 className="text-[20px] font-semibold tracking-tight text-neutral-950 dark:text-white">
+            <h2 className="font-display text-[22px] font-bold tracking-tight text-neutral-950 dark:text-white">
               {mode === "signup" ? t.auth.titleSignUp : t.auth.titleSignIn}
             </h2>
             <p className="mt-1 text-[13px] leading-relaxed text-neutral-500 dark:text-neutral-400">
@@ -149,7 +149,7 @@ export function AuthModal({ open, onClose, onAuthenticated }: AuthModalProps) {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-neutral-950 py-3 text-[14px] font-semibold text-white transition-transform active:scale-[0.98] disabled:opacity-60 dark:bg-white dark:text-neutral-950"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0369A1] py-3 text-[14px] font-semibold text-white shadow-[0_4px_14px_-4px_rgba(3,105,161,0.28)] transition-colors hover:bg-[#075985] active:scale-[0.98] disabled:opacity-60 dark:bg-sky-400/90 dark:text-neutral-950"
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                 {mode === "signup" ? t.auth.submitSignUp : t.auth.submitSignIn}

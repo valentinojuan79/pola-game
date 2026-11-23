@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { PolaGameType } from "./storage";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -212,7 +213,7 @@ export async function signOutUser(): Promise<void> {
 export async function submitDailyScore(params: {
   user: PolaUser;
   puzzleDate: string;
-  gameType: "queens";
+  gameType: PolaGameType;
   totalSeconds: number;
   hintsUsed: number;
 }): Promise<void> {
@@ -263,7 +264,7 @@ export async function submitDailyScore(params: {
 
 export async function fetchDailyLeaderboard(
   puzzleDate: string,
-  gameType: "queens",
+  gameType: PolaGameType,
   currentUserId?: string
 ): Promise<LeaderboardEntry[]> {
   const supabase = getSupabaseClient();
