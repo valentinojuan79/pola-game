@@ -231,10 +231,11 @@ export function ZipBoard({
           <defs>
             <linearGradient
               id="zip-path-gradient"
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="100%"
+              gradientUnits="userSpaceOnUse"
+              x1={0}
+              y1={0}
+              x2={n * 100}
+              y2={n * 100}
             >
               <stop offset="0%" stopColor="#0284C7" />
               <stop offset="55%" stopColor="#0EA5E9" />

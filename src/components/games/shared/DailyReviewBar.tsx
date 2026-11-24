@@ -1,13 +1,32 @@
 "use client";
 
-import React, { useState } from "react";
-import { Check, CheckCircle2, Infinity as InfinityIcon, Share2 } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { CheckCircle2, Infinity as InfinityIcon, Share2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { useTheme } from "@/lib/theme";
 import { feedback } from "@/lib/feedback";
-import type { PolaGameType } from "@/lib/storage";
+import {
+  getDailyCompletion,
+  getTodayDateString,
+  loadStats,
+  type PolaGameType,
+} from "@/lib/storage";
+import type {
+  ShareDifficulty,
+  SingleGameSharePayload,
+} from "@/lib/shareCardRenderer";
+import { VisualShareModal } from "@/components/VisualShareModal";
 
 interface DailyReviewBarProps {
   game: PolaGameType;
+  dateStr?: string;
+  difficulty?: ShareDifficulty;
+  gridSize?: number;
+  totalSeconds?: number;
+  hintsUsed?: number;
+  streak?: number;
+  dailyRank?: number | null;
+  username?: string | null;
   shareText: string;
   onPlayUnlimited: () => void;
   onBackHome: () => void;
@@ -67,12 +86,21 @@ const ACCENT_STYLES: Record<
 
 export function DailyReviewBar({
   game,
+  dateStr,
+  difficulty,
+  gridSize,
+  totalSeconds,
+  hintsUsed,
+  streak,
+  dailyRank = null,
+  username = null,
   shareText,
   onPlayUnlimited,
   onBackHome,
 }: DailyReviewBarProps) {
-  const { t } = useI18n();
-  const [copied, setCopied] = useState(false);
+  const { locale, t } = useI18n();
+  const { theme } = useTheme();
+  const [shareOpen, setShareOpen] = useState(false);
 
   const style = ACCENT_STYLES[game];
   const headline =
@@ -88,77 +116,96 @@ export function DailyReviewBar({
       ? t.review.crushedPatches
       : t.review.crushedFold;
 
-  const handleShare = async () => {
+  const sharePayload = useMemo<SingleGameSharePayload>(() => {
+    const resolvedDate = dateStr ?? getTodayDateString();
+    const saved = getDailyCompletion(resolvedDate, game);
+    const savedStats = loadStats();
+
+    return {
+      kind: "single",
+      game,
+      mode: "daily",
+      dateStr: resolvedDate,
+      difficulty,
+      gridSize,
+      totalSeconds: totalSeconds ?? saved?.totalSeconds ?? 0,
+      hintsUsed: hintsUsed ?? saved?.hintsUsed ?? 0,
+      streak: streak ?? savedStats.currentStreak,
+      dailyRank,
+      username,
+    };
+  }, [
+    game,
+    dateStr,
+    difficulty,
+    gridSize,
+    totalSeconds,
+    hintsUsed,
+    streak,
+    dailyRank,
+    username,
+  ]);
+
+  const handleShare = () => {
     feedback.pop();
-    try {
-      await navigator.clipboard.writeText(shareText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = shareText;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+    setShareOpen(true);
   };
 
   return (
-    <div
-      className={`glass-card mt-4 w-full rounded-[24px] p-4 ${style.borderTint}`}
-    >
-      <div className="flex items-center justify-center gap-2 text-center">
-        <CheckCircle2 className={`h-4 w-4 shrink-0 ${style.checkColor}`} />
-        <p className="text-[13px] font-semibold text-neutral-900 dark:text-white">
-          {headline}
-        </p>
-      </div>
+    <>
+      <div
+        className={`glass-card mt-4 w-full rounded-[24px] p-4 ${style.borderTint}`}
+      >
+        <div className="flex items-center justify-center gap-2 text-center">
+          <CheckCircle2 className={`h-4 w-4 shrink-0 ${style.checkColor}`} />
+          <p className="text-[13px] font-semibold text-neutral-900 dark:text-white">
+            {headline}
+          </p>
+        </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              feedback.pop();
+              onPlayUnlimited();
+            }}
+            className={`flex items-center justify-center gap-1.5 rounded-2xl py-3 text-[13px] font-semibold transition-all active:scale-[0.98] ${style.primaryBtn}`}
+          >
+            <InfinityIcon className="h-4 w-4" />
+            {t.review.playUnlimited}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleShare}
+            className="glass-card flex items-center justify-center gap-1.5 rounded-2xl py-3 text-[13px] font-semibold text-neutral-900 transition-transform active:scale-[0.98] dark:text-white"
+          >
+            <Share2 className="h-4 w-4" />
+            {t.review.shareResult}
+          </button>
+        </div>
+
         <button
           type="button"
           onClick={() => {
-            feedback.pop();
-            onPlayUnlimited();
+            feedback.click();
+            onBackHome();
           }}
-          className={`flex items-center justify-center gap-1.5 rounded-2xl py-3 text-[13px] font-semibold transition-all active:scale-[0.98] ${style.primaryBtn}`}
+          className="mt-2 w-full py-1.5 text-[12px] font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
         >
-          <InfinityIcon className="h-4 w-4" />
-          {t.review.playUnlimited}
-        </button>
-
-        <button
-          type="button"
-          onClick={handleShare}
-          className="glass-card flex items-center justify-center gap-1.5 rounded-2xl py-3 text-[13px] font-semibold text-neutral-900 transition-transform active:scale-[0.98] dark:text-white"
-        >
-          {copied ? (
-            <>
-              <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              {t.review.copied}
-            </>
-          ) : (
-            <>
-              <Share2 className="h-4 w-4" />
-              {t.review.shareResult}
-            </>
-          )}
+          {t.review.backToToday}
         </button>
       </div>
 
-      <button
-        type="button"
-        onClick={() => {
-          feedback.click();
-          onBackHome();
-        }}
-        className="mt-2 w-full py-1.5 text-[12px] font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
-      >
-        {t.review.backToToday}
-      </button>
-    </div>
+      <VisualShareModal
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+        payload={sharePayload}
+        theme={theme}
+        lang={locale}
+        shareText={shareText}
+      />
+    </>
   );
 }

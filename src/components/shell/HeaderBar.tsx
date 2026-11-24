@@ -46,7 +46,7 @@ export function HeaderBar() {
             toggleLocale();
           }}
           aria-label="Toggle Language"
-          className="header-btn flex h-8 min-w-[38px] items-center justify-center rounded-full px-2.5 text-[11px] font-bold tracking-wide text-neutral-700 transition-all hover:bg-white/95 active:scale-95 dark:text-neutral-200 dark:hover:bg-white/[0.14]"
+          className="header-btn flex h-8 min-w-[38px] items-center justify-center rounded-full px-2.5 text-[11px] font-bold tracking-wide text-neutral-700 transition-colors hover:bg-white/95 dark:text-neutral-200 dark:hover:bg-white/[0.14]"
         >
           {locale.toUpperCase()}
         </button>
@@ -55,7 +55,7 @@ export function HeaderBar() {
           type="button"
           onClick={handleToggleMute}
           aria-label={muted ? t.settings.soundOff : t.settings.soundOn}
-          className="header-btn flex h-8 w-8 items-center justify-center rounded-full text-neutral-700 transition-all hover:bg-white/95 active:scale-95 dark:text-neutral-200 dark:hover:bg-white/[0.14]"
+          className="header-btn flex h-8 w-8 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-white/95 dark:text-neutral-200 dark:hover:bg-white/[0.14]"
         >
           {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
         </button>
@@ -67,7 +67,7 @@ export function HeaderBar() {
             toggleTheme();
           }}
           aria-label={theme === "dark" ? t.settings.lightMode : t.settings.darkMode}
-          className="header-btn flex h-8 w-8 items-center justify-center rounded-full text-neutral-700 transition-all hover:bg-white/95 active:scale-95 dark:text-neutral-200 dark:hover:bg-white/[0.14]"
+          className="header-btn flex h-8 w-8 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-white/95 dark:text-neutral-200 dark:hover:bg-white/[0.14]"
         >
           {theme === "dark" ? (
             <Sun className="h-4 w-4 text-amber-400" />

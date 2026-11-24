@@ -357,10 +357,10 @@ export function FoldGame({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 12 }}
-      transition={{ duration: 0.2 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.18 }}
       className="flex min-h-[100dvh] flex-col justify-between px-4 pb-6 safe-pb"
     >
       {/* Top Game Navigation Bar — 3-column symmetric header */}
@@ -371,14 +371,14 @@ export function FoldGame({
             feedback.click();
             onExit();
           }}
-          className="header-btn justify-self-start flex h-9 items-center gap-1 rounded-full pr-3.5 pl-2.5 text-[13px] font-medium text-neutral-800 transition-transform active:scale-95 dark:text-neutral-200"
+          className="header-btn justify-self-start flex h-9 items-center gap-1 rounded-full pr-3.5 pl-2.5 text-[13px] font-medium text-neutral-800 transition-colors dark:text-neutral-200"
         >
           <ChevronLeft className="h-4 w-4" />
           {t.fold.back}
         </button>
 
         <div className="flex flex-col items-center justify-self-center text-center">
-          <span className="whitespace-nowrap text-[12px] font-semibold tracking-tight text-neutral-500 dark:text-neutral-400">
+          <span className="whitespace-nowrap text-[13px] font-semibold tracking-normal text-slate-600 dark:text-slate-300">
             {mode === "daily" ? t.fold.dailyLabel : t.fold.unlimitedLabel} ·{" "}
             {puzzle.size}×{puzzle.size}
           </span>
@@ -398,7 +398,7 @@ export function FoldGame({
             setShowRules(true);
           }}
           aria-label={t.fold.howToPlay}
-          className="header-btn justify-self-end flex h-9 w-9 items-center justify-center rounded-full text-neutral-700 transition-transform active:scale-95 dark:text-neutral-200"
+          className="header-btn justify-self-end flex h-9 w-9 items-center justify-center rounded-full text-neutral-700 transition-colors dark:text-neutral-200"
         >
           <HelpCircle className="h-4 w-4" />
         </button>
@@ -485,6 +485,14 @@ export function FoldGame({
       {isReviewMode ? (
         <DailyReviewBar
           game="fold"
+          dateStr={dateStr}
+          difficulty={puzzle.difficulty}
+          gridSize={puzzle.size}
+          totalSeconds={reviewCompletion?.totalSeconds ?? totalSeconds}
+          hintsUsed={reviewCompletion?.hintsUsed ?? hintsUsed}
+          streak={streak}
+          dailyRank={dailyRank}
+          username={user?.displayName ?? null}
           shareText={shareText}
           onPlayUnlimited={onPlayUnlimitedNext}
           onBackHome={onExit}
