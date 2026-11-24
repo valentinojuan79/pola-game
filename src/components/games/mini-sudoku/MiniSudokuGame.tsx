@@ -512,7 +512,7 @@ export function MiniSudokuGame({
             feedback.click();
             onExit();
           }}
-          className="glass-card justify-self-start flex h-9 items-center gap-1 rounded-full pr-3.5 pl-2.5 text-[13px] font-medium text-neutral-800 transition-transform active:scale-95 dark:text-neutral-200"
+          className="header-btn justify-self-start flex h-9 items-center gap-1 rounded-full pr-3.5 pl-2.5 text-[13px] font-medium text-neutral-800 transition-transform active:scale-95 dark:text-neutral-200"
         >
           <ChevronLeft className="h-4 w-4" />
           {t.miniSudoku.back}
@@ -543,7 +543,7 @@ export function MiniSudokuGame({
             setShowRules(true);
           }}
           aria-label={t.miniSudoku.howToPlay}
-          className="glass-card justify-self-end flex h-9 w-9 items-center justify-center rounded-full text-neutral-700 transition-transform active:scale-95 dark:text-neutral-200"
+          className="header-btn justify-self-end flex h-9 w-9 items-center justify-center rounded-full text-neutral-700 transition-transform active:scale-95 dark:text-neutral-200"
         >
           <HelpCircle className="h-4 w-4" />
         </button>
@@ -647,7 +647,7 @@ export function MiniSudokuGame({
       ) : (
         <div className="mt-3 space-y-2.5">
           {/* 1-6 Glass Number Pad */}
-          <div className="grid grid-cols-6 gap-2">
+          <div className="grid grid-cols-6 gap-1.5">
             {DIGITS.map((d) => {
               const isDone = completedDigits.has(d);
               return (
@@ -658,7 +658,7 @@ export function MiniSudokuGame({
                   disabled={hasWon}
                   onClick={() => handleDigitInput(d)}
                   aria-label={`Number ${d}${isDone ? " completed" : ""}`}
-                  className={`glass-card relative flex h-[54px] items-center justify-center rounded-[18px] font-display tabular-nums text-[22px] font-bold transition-all disabled:opacity-40 ${
+                  className={`glass-card relative flex h-14 min-h-[56px] items-center justify-center rounded-[18px] font-display tabular-nums text-xl sm:text-2xl font-bold transition-all disabled:opacity-40 ${
                     isDone && !notesMode
                       ? "border-emerald-500/20 bg-emerald-500/[0.06] text-neutral-400 opacity-55 dark:border-emerald-400/15 dark:bg-emerald-400/[0.06] dark:text-neutral-500"
                       : notesMode

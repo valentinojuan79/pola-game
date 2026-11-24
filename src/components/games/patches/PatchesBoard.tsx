@@ -255,7 +255,7 @@ export function PatchesBoard({
   const draggingClueId = activeDrag?.check.clue?.id ?? null;
 
   return (
-    <div className="relative aspect-square w-full max-w-[390px] overflow-hidden rounded-[26px] border border-rose-500/20 bg-white/75 p-2 shadow-[0_8px_30px_-10px_rgba(225,29,72,0.10),inset_0_1px_0_0_rgba(255,255,255,0.65)] backdrop-blur-2xl dark:border-rose-400/18 dark:bg-neutral-900/65 dark:shadow-[0_12px_32px_-12px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(255,255,255,0.08)]">
+    <div className="relative w-full max-w-[390px] rounded-2xl border border-rose-500/20 bg-white/75 p-2.5 shadow-[0_8px_30px_-10px_rgba(225,29,72,0.10),inset_0_1px_0_0_rgba(255,255,255,0.65)] backdrop-blur-2xl dark:border-rose-400/18 dark:bg-neutral-900/65 dark:shadow-[0_12px_32px_-12px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(255,255,255,0.08)]">
       <div
         ref={boardRef}
         onPointerDown={handlePointerDown}
@@ -263,11 +263,11 @@ export function PatchesBoard({
         onPointerUp={finishDrag}
         onPointerCancel={finishDrag}
         style={{ touchAction: "none", overscrollBehavior: "none" }}
-        className="relative h-full w-full select-none overflow-hidden rounded-[18px] border border-black/[0.08] bg-white/85 dark:border-white/[0.10] dark:bg-neutral-950/60"
+        className="relative aspect-square w-full select-none overflow-hidden rounded-xl border border-black/[0.08] bg-white/85 dark:border-white/[0.10] dark:bg-neutral-950/60"
       >
         {/* Layer 1: Static equal-sized grid cells (zero resizing) */}
         <div
-          className="grid h-full w-full"
+          className="grid aspect-square w-full"
           style={{
             gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))`,
             gridTemplateRows: `repeat(${n}, minmax(0, 1fr))`,

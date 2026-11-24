@@ -46,7 +46,7 @@ export interface RenderShareCardOptions {
   locale: Locale;
 }
 
-export const SHARE_APP_URL = "pola-game-three.vercel.app";
+export const SHARE_APP_URL = "playpola.vercel.app";
 
 export const SHARE_CARD_DIMENSIONS: Record<
   ShareCardFormat,

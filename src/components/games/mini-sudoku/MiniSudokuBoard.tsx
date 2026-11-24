@@ -67,12 +67,12 @@ export function MiniSudokuBoard({
 
   return (
     <div
-      className="glass-card relative aspect-square w-full max-w-[376px] select-none overflow-hidden rounded-[26px] p-2.5"
+      className="glass-card relative w-full max-w-[376px] select-none rounded-2xl p-2.5"
       style={{ touchAction: "none", overscrollBehavior: "none" }}
     >
       {/* Inner strict 6x6 frame with crisp outer border */}
-      <div className="relative h-full w-full overflow-hidden rounded-[18px] border-[1.5px] border-neutral-400/75 bg-white/80 dark:border-white/[0.18] dark:bg-neutral-900/70">
-        <div className="grid h-full w-full grid-cols-6 grid-rows-6">
+      <div className="relative w-full overflow-hidden rounded-xl border-[1.5px] border-neutral-400/75 bg-white/80 dark:border-white/[0.18] dark:bg-neutral-900/70">
+        <div className="grid aspect-square w-full grid-cols-6 grid-rows-6">
           {grid.map((row, r) =>
             row.map((val, c) => {
               const key = cellKey(r, c);

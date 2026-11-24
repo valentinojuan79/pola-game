@@ -355,7 +355,7 @@ export function ZipGame({
             feedback.click();
             onExit();
           }}
-          className="glass-card justify-self-start flex h-9 items-center gap-1 rounded-full pr-3.5 pl-2.5 text-[13px] font-medium text-neutral-800 transition-transform active:scale-95 dark:text-neutral-200"
+          className="header-btn justify-self-start flex h-9 items-center gap-1 rounded-full pr-3.5 pl-2.5 text-[13px] font-medium text-neutral-800 transition-transform active:scale-95 dark:text-neutral-200"
         >
           <ChevronLeft className="h-4 w-4" />
           {t.zip.back}
@@ -383,7 +383,7 @@ export function ZipGame({
             setShowRules(true);
           }}
           aria-label={t.zip.howToPlay}
-          className="glass-card justify-self-end flex h-9 w-9 items-center justify-center rounded-full text-neutral-700 transition-transform active:scale-95 dark:text-neutral-200"
+          className="header-btn justify-self-end flex h-9 w-9 items-center justify-center rounded-full text-neutral-700 transition-transform active:scale-95 dark:text-neutral-200"
         >
           <HelpCircle className="h-4 w-4" />
         </button>
