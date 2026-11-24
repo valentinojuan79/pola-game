@@ -1,7 +1,16 @@
 "use client";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { DailyCompletion, LocalProfileStats, PolaGameType } from "./storage";
+import {
+  claimDailyRankedSlot,
+  DEFAULT_STATS,
+  isDailyRankLockedByOtherUser,
+  type DailyCompletion,
+  type LocalProfileStats,
+  type PolaGameType,
+} from "./storage";
+
+export const MIN_PLAUSIBLE_SOLVE_SECONDS = 4;
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
@@ -378,14 +387,27 @@ export async function signOutUser(): Promise<void> {
  * Submit a player's Daily solve.
  * First valid solve per (user, game, date) is locked by DB UNIQUE constraint
  * and cannot be overwritten by replays.
+ * Enforces:
+ *   1. Minimum plausible solve-time guardrail (`elapsedSeconds >= 4`).
+ *   2. One ranked daily entry per device per day (unless `?dev=1` bypass is active).
  */
 export async function submitDailyScore(params: {
   user: PolaUser;
   puzzleDate: string;
   gameType: PolaGameType;
   totalSeconds: number;
+  elapsedSeconds?: number;
   hintsUsed: number;
 }): Promise<boolean> {
+  const rawElapsed = params.elapsedSeconds ?? params.totalSeconds;
+  if (rawElapsed < MIN_PLAUSIBLE_SOLVE_SECONDS) {
+    return false;
+  }
+
+  if (isDailyRankLockedByOtherUser(params.puzzleDate, params.user.id)) {
+    return false;
+  }
+
   const supabase = getSupabaseClient();
   if (supabase && !params.user.isLocalOnly) {
     try {
@@ -401,6 +423,7 @@ export async function submitDailyScore(params: {
       if (error && error.code !== "23505") {
         return false;
       }
+      claimDailyRankedSlot(params.puzzleDate, params.user.id);
       return true;
     } catch {
       return false;
@@ -432,6 +455,7 @@ export async function submitDailyScore(params: {
       );
       localStorage.setItem(key, JSON.stringify(entries));
     }
+    claimDailyRankedSlot(params.puzzleDate, params.user.id);
     return true;
   } catch {
     return false;
@@ -503,6 +527,7 @@ export async function syncGuestCompletionsToAccount(
         puzzleDate: todayDateStr,
         gameType,
         totalSeconds: completion.totalSeconds,
+        elapsedSeconds: completion.elapsedSeconds,
         hintsUsed: completion.hintsUsed,
       });
       if (ok) syncedCount += 1;
@@ -511,6 +536,97 @@ export async function syncGuestCompletionsToAccount(
 
   await syncProfileStreaks(user, stats);
   return syncedCount;
+}
+
+/**
+ * Fetches and hydrates an existing signed-in user's saved daily completions,
+ * solve times, total solved count, current streak, and best streak from Supabase.
+ */
+export async function hydrateUserStatsFromSupabase(
+  user: PolaUser,
+  mergeLocalStats?: LocalProfileStats
+): Promise<LocalProfileStats> {
+  const base: LocalProfileStats = mergeLocalStats
+    ? {
+        ...mergeLocalStats,
+        dailyCompletions: { ...mergeLocalStats.dailyCompletions },
+      }
+    : {
+        ...DEFAULT_STATS,
+        dailyCompletions: {},
+      };
+
+  const supabase = getSupabaseClient();
+  if (!supabase || user.isLocalOnly) {
+    return base;
+  }
+
+  try {
+    const [profileRes, completionsRes] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("current_streak, longest_streak")
+        .eq("id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("daily_completions")
+        .select("game_id, puzzle_date, time_seconds, hints_used, completed_at")
+        .eq("user_id", user.id)
+        .order("puzzle_date", { ascending: false })
+        .limit(500),
+    ]);
+
+    const dailyCompletions: Record<string, DailyCompletion> = {
+      ...base.dailyCompletions,
+    };
+
+    const rows = completionsRes.data ?? [];
+    let latestDate: string | null = base.lastDailyDate;
+
+    for (const row of rows) {
+      const game = row.game_id as PolaGameType;
+      const date = row.puzzle_date as string;
+      const key = `${date}:${game}`;
+      const existing = dailyCompletions[key];
+      const timeSec = Number(row.time_seconds ?? 0);
+      const hints = Number(row.hints_used ?? 0);
+
+      dailyCompletions[key] = {
+        date,
+        game,
+        elapsedSeconds: existing?.elapsedSeconds ?? timeSec,
+        penaltySeconds: existing?.penaltySeconds ?? 0,
+        totalSeconds: timeSec,
+        hintsUsed: hints,
+        completedAt: (row.completed_at as string) ?? new Date().toISOString(),
+        boardSnapshot: existing?.boardSnapshot,
+      };
+
+      if (!latestDate || date > latestDate) {
+        latestDate = date;
+      }
+    }
+
+    const remoteCurrent = profileRes.data?.current_streak ?? 0;
+    const remoteLongest = profileRes.data?.longest_streak ?? 0;
+    const currentStreak = Math.max(remoteCurrent, base.currentStreak);
+    const longestStreak = Math.max(
+      remoteLongest,
+      base.longestStreak,
+      currentStreak
+    );
+    const totalSolved = Math.max(rows.length, base.totalSolved);
+
+    return {
+      currentStreak,
+      longestStreak,
+      lastDailyDate: latestDate,
+      totalSolved,
+      dailyCompletions,
+    };
+  } catch {
+    return base;
+  }
 }
 
 /**

@@ -7,6 +7,7 @@ import {
   Crown,
   Flame,
   Grid3X3,
+  Info,
   Infinity as InfinityIcon,
   Layers,
   LayoutGrid,
@@ -21,7 +22,11 @@ import { useTheme } from "@/lib/theme";
 import { feedback } from "@/lib/feedback";
 import { formatTime } from "@/lib/games/queens/engine";
 import type { PolaUser } from "@/lib/supabase";
-import { getTodayDateString, type PolaGameType } from "@/lib/storage";
+import {
+  getTodayDateString,
+  isDailyRankLockedByOtherUser,
+  type PolaGameType,
+} from "@/lib/storage";
 import type {
   ShareDifficulty,
   SingleGameSharePayload,
@@ -293,14 +298,24 @@ export function WinModal({
             {mode === "daily" && (
               <div className="mt-4 rounded-2xl bg-black/[0.035] px-3.5 py-2.5 dark:bg-white/[0.05]">
                 {user ? (
-                  <div className="flex items-center justify-between text-[12px]">
-                    <span className="text-neutral-500 dark:text-neutral-400">
-                      {t.win.rank} (@{user.displayName})
-                    </span>
-                    <span className="tabular-nums font-semibold text-neutral-900 dark:text-white">
-                      {dailyRank ? `#${dailyRank}` : t.win.rankSyncing}
-                    </span>
-                  </div>
+                  isDailyRankLockedByOtherUser(
+                    dateStr ?? getTodayDateString(),
+                    user.id
+                  ) ? (
+                    <div className="flex items-center justify-center gap-1.5 text-center text-[11.5px] leading-snug text-neutral-500 dark:text-neutral-400">
+                      <Info className="h-3.5 w-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                      <span>{t.leaderboard.deviceSlotClaimed}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between text-[12px]">
+                      <span className="text-neutral-500 dark:text-neutral-400">
+                        {t.win.rank} (@{user.displayName})
+                      </span>
+                      <span className="tabular-nums font-semibold text-neutral-900 dark:text-white">
+                        {dailyRank ? `#${dailyRank}` : t.win.rankSyncing}
+                      </span>
+                    </div>
+                  )
                 ) : (
                   <div className="flex items-center justify-between gap-2 text-left">
                     <p className="text-[11px] leading-snug text-neutral-500 dark:text-neutral-400">

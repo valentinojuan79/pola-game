@@ -57,11 +57,18 @@ import {
 } from "@/lib/games/fold/presets";
 import type { FoldDifficulty, FoldPuzzle } from "@/lib/games/fold/types";
 import {
+  clearLocalProgress,
   DEFAULT_STATS,
   getDailyCompletion,
+  getGuestMigratedOwner,
   getTodayDateString,
+  hasUnmigratedGuestProgress,
+  initDevBypassFromUrl,
+  isDailyRankLockedByOtherUser,
   loadStats,
+  markGuestProgressMigrated,
   recordGameCompletion,
+  saveStats,
   type DailyCompletion,
   type LocalProfileStats,
   type PolaGameType,
@@ -70,6 +77,8 @@ import {
   ALL_GAME_IDS,
   fetchUserDailyRank,
   getCurrentUser,
+  hydrateUserStatsFromSupabase,
+  MIN_PLAUSIBLE_SOLVE_SECONDS,
   signOutUser,
   submitDailyScore,
   syncGuestCompletionsToAccount,
@@ -152,10 +161,30 @@ export default function PolaAppPage() {
   );
 
   useEffect(() => {
-    setStats(loadStats());
-    getCurrentUser().then((u) => {
-      if (u) setUser(u);
+    initDevBypassFromUrl();
+    const localStats = loadStats();
+    setStats(localStats);
+
+    let active = true;
+    getCurrentUser().then(async (u) => {
+      if (!active || !u) return;
+      setUser(u);
+      if (!u.isLocalOnly) {
+        const sameOwner = getGuestMigratedOwner() === u.id;
+        const hydrated = await hydrateUserStatsFromSupabase(
+          u,
+          sameOwner ? localStats : undefined
+        );
+        if (!active) return;
+        saveStats(hydrated);
+        markGuestProgressMigrated(u.id);
+        setStats(hydrated);
+      }
     });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const todayQueensCompletion = useMemo(
@@ -360,16 +389,34 @@ export default function PolaAppPage() {
 
       if (activeGame.mode === "daily" && user) {
         const totalSeconds = result.elapsedSeconds + result.penaltySeconds;
-        await submitDailyScore({
-          user,
-          puzzleDate: todayDateStr,
-          gameType,
-          totalSeconds,
-          hintsUsed: result.hintsUsed,
-        });
-        await syncProfileStreaks(user, updated);
-        const rank = await fetchUserDailyRank(todayDateStr, gameType, user.id);
-        setDailyRank(rank);
+        const canSubmitToPublicRanks =
+          result.elapsedSeconds >= MIN_PLAUSIBLE_SOLVE_SECONDS &&
+          !isDailyRankLockedByOtherUser(todayDateStr, user.id);
+
+        if (canSubmitToPublicRanks) {
+          const submitted = await submitDailyScore({
+            user,
+            puzzleDate: todayDateStr,
+            gameType,
+            totalSeconds,
+            elapsedSeconds: result.elapsedSeconds,
+            hintsUsed: result.hintsUsed,
+          });
+          await syncProfileStreaks(user, updated);
+          if (submitted) {
+            const rank = await fetchUserDailyRank(
+              todayDateStr,
+              gameType,
+              user.id
+            );
+            setDailyRank(rank);
+          } else {
+            setDailyRank(null);
+          }
+        } else {
+          await syncProfileStreaks(user, updated);
+          setDailyRank(null);
+        }
         setSyncVersion((v) => v + 1);
       }
     },
@@ -380,27 +427,47 @@ export default function PolaAppPage() {
     async (signedInUser: PolaUser) => {
       setUser(signedInUser);
       const currentStats = loadStats();
-      const completions: Partial<Record<PolaGameType, DailyCompletion | null>> =
-        {};
-      for (const gameType of ALL_GAME_IDS) {
-        completions[gameType] = getDailyCompletion(todayDateStr, gameType);
+      const shouldMigrateGuest = hasUnmigratedGuestProgress(currentStats);
+
+      if (shouldMigrateGuest) {
+        const completions: Partial<
+          Record<PolaGameType, DailyCompletion | null>
+        > = {};
+        for (const gameType of ALL_GAME_IDS) {
+          completions[gameType] = getDailyCompletion(todayDateStr, gameType);
+        }
+
+        await syncGuestCompletionsToAccount(
+          signedInUser,
+          todayDateStr,
+          completions,
+          currentStats
+        );
+        // Immediately mark claimed so a subsequent account can never inherit guest progress
+        markGuestProgressMigrated(signedInUser.id);
       }
 
-      await syncGuestCompletionsToAccount(
+      const hydrated = await hydrateUserStatsFromSupabase(
         signedInUser,
-        todayDateStr,
-        completions,
-        currentStats
+        shouldMigrateGuest ? currentStats : undefined
       );
+      saveStats(hydrated);
+      markGuestProgressMigrated(signedInUser.id);
+      setStats(hydrated);
       setSyncVersion((v) => v + 1);
 
-      if (activeGame?.mode === "daily") {
+      if (
+        activeGame?.mode === "daily" &&
+        !isDailyRankLockedByOtherUser(todayDateStr, signedInUser.id)
+      ) {
         const rank = await fetchUserDailyRank(
           todayDateStr,
           activeGame.game,
           signedInUser.id
         );
         setDailyRank(rank);
+      } else {
+        setDailyRank(null);
       }
     },
     [todayDateStr, activeGame]
@@ -408,8 +475,12 @@ export default function PolaAppPage() {
 
   const handleSignOut = useCallback(async () => {
     await signOutUser();
+    clearLocalProgress();
     setUser(null);
+    setStats(DEFAULT_STATS);
     setDailyRank(null);
+    setActiveGame(null);
+    setSyncVersion((v) => v + 1);
   }, []);
 
   return (

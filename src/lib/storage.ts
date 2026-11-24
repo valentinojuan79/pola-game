@@ -29,6 +29,9 @@ export interface LocalProfileStats {
 }
 
 const STATS_KEY = "pola_stats_v1";
+const GUEST_MIGRATED_KEY = "pola_guest_migrated_v1";
+const DEV_BYPASS_KEY = "pola_dev_bypass";
+const DAILY_RANKED_CLAIMED_PREFIX = "pola_daily_ranked_claimed_";
 const AUTO_X_KEY = "pola_queens_auto_x";
 const TANGO_VISUAL_MODE_KEY = "pola_tango_visual_mode";
 const TUTORIAL_PREFS_KEY = "pola_tutorial_prefs_v1";
@@ -84,6 +87,112 @@ export function saveStats(stats: LocalProfileStats): void {
     localStorage.setItem(STATS_KEY, JSON.stringify(stats));
   } catch {
     // Ignore quota errors
+  }
+}
+
+/**
+ * Clears all local puzzle progress & guest-migration flags on Sign Out.
+ * Preserves non-account UI preferences (theme, language, sound, visual/tutorial prefs),
+ * the per-device daily rank lock (`pola_daily_ranked_claimed_${dateKey}`),
+ * and developer bypass (`pola_dev_bypass`).
+ */
+export function clearLocalProgress(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(STATS_KEY);
+    localStorage.removeItem(GUEST_MIGRATED_KEY);
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+export function getGuestMigratedOwner(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(GUEST_MIGRATED_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function isGuestProgressMigrated(): boolean {
+  return Boolean(getGuestMigratedOwner());
+}
+
+export function markGuestProgressMigrated(userId: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(GUEST_MIGRATED_KEY, userId);
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+export function hasUnmigratedGuestProgress(stats: LocalProfileStats): boolean {
+  if (isGuestProgressMigrated()) return false;
+  return (
+    stats.totalSolved > 0 || Object.keys(stats.dailyCompletions).length > 0
+  );
+}
+
+/**
+ * Checks URL for `?dev=1` (persisting `pola_dev_bypass = "1"` in localStorage)
+ * or reads existing `pola_dev_bypass` flag.
+ */
+export function isDevBypassActive(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("dev") === "1") {
+      localStorage.setItem(DEV_BYPASS_KEY, "1");
+      return true;
+    }
+    return localStorage.getItem(DEV_BYPASS_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function initDevBypassFromUrl(): boolean {
+  return isDevBypassActive();
+}
+
+export function getDailyRankedClaimedBy(dateKey: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(`${DAILY_RANKED_CLAIMED_PREFIX}${dateKey}`);
+  } catch {
+    return null;
+  }
+}
+
+export function isDailyRankLockedByOtherUser(
+  dateKey: string,
+  userId: string | null | undefined
+): boolean {
+  if (!userId) return false;
+  if (isDevBypassActive()) return false;
+  const claimedBy = getDailyRankedClaimedBy(dateKey);
+  return Boolean(claimedBy && claimedBy !== userId);
+}
+
+/**
+ * Claims today's device leaderboard slot for `userId` (unless dev bypass is active).
+ * Returns true if `userId` is allowed to post to the public daily leaderboard today.
+ */
+export function claimDailyRankedSlot(dateKey: string, userId: string): boolean {
+  if (typeof window === "undefined") return true;
+  if (isDevBypassActive()) return true;
+  try {
+    const key = `${DAILY_RANKED_CLAIMED_PREFIX}${dateKey}`;
+    const claimedBy = localStorage.getItem(key);
+    if (!claimedBy) {
+      localStorage.setItem(key, userId);
+      return true;
+    }
+    return claimedBy === userId;
+  } catch {
+    return true;
   }
 }
 

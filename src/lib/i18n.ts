@@ -284,6 +284,8 @@ export const dictionary = {
       emptyBoardPatches: "Wide open! Be the first on today's Patches board.",
       emptyBoardFold: "Wide open! Be the first on today's Fold board.",
       offlineNote: "Showing local scores. Connect Supabase to sync global ranks.",
+      deviceSlotClaimed:
+        "Daily leaderboard slot already claimed on this device today",
       you: "You",
     },
     auth: {
@@ -655,6 +657,8 @@ export const dictionary = {
       emptyBoardPatches: "Masih kosong nih! Jadilah yang pertama di Patches hari ini.",
       emptyBoardFold: "Masih kosong nih! Jadilah yang pertama di Fold hari ini.",
       offlineNote: "Menampilkan skor lokal. Hubungkan Supabase buat sinkronisasi global.",
+      deviceSlotClaimed:
+        "Slot peringkat harian di perangkat ini sudah dipakai akun lain hari ini",
       you: "Kamu",
     },
     auth: {

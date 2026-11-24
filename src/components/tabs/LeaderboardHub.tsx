@@ -6,6 +6,7 @@ import {
   Crown,
   Flame,
   Grid3X3,
+  Info,
   Layers,
   LayoutGrid,
   LogOut,
@@ -18,7 +19,10 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { feedback } from "@/lib/feedback";
-import type { LocalProfileStats } from "@/lib/storage";
+import {
+  isDailyRankLockedByOtherUser,
+  type LocalProfileStats,
+} from "@/lib/storage";
 import {
   fetchDailyLeaderboard,
   fetchOverallDailyLeaderboard,
@@ -211,6 +215,14 @@ export function LeaderboardHub({
           </div>
         </div>
       </div>
+
+      {/* Subtle info pill when today's device rank slot was claimed by another account */}
+      {user && isDailyRankLockedByOtherUser(todayDateStr, user.id) && (
+        <div className="mt-3 flex items-center gap-2 rounded-2xl border border-black/[0.06] bg-black/[0.03] px-3.5 py-2.5 text-[12px] leading-snug text-neutral-600 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-neutral-300">
+          <Info className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+          <span>{t.leaderboard.deviceSlotClaimed}</span>
+        </div>
+      )}
 
       {/* Daily Leaderboard Section with Overall + 6-Game Switcher */}
       <div className="mt-6">
