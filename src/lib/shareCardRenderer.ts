@@ -52,7 +52,7 @@ export const SHARE_CARD_DIMENSIONS: Record<
   ShareCardFormat,
   { width: number; height: number }
 > = {
-  compact: { width: 1080, height: 1350 }, // 4:5 card — crisp for WhatsApp, iMessage & feeds
+  compact: { width: 1080, height: 1350 }, // 4:5 card — crisp for WhatsApp, chats & feeds
   story: { width: 1080, height: 1920 }, // 9:16 vertical story — Instagram & WhatsApp Stories
 };
 
