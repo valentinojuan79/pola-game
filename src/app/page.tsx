@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { HeaderBar } from "@/components/shell/HeaderBar";
 import { BottomNav, type AppTab } from "@/components/shell/BottomNav";
+import { DesktopFooter } from "@/components/shell/DesktopFooter";
 import { AuthModal } from "@/components/shell/AuthModal";
 import { TodayHub } from "@/components/tabs/TodayHub";
 import { UnlimitedHub } from "@/components/tabs/UnlimitedHub";
@@ -706,13 +707,7 @@ export default function PolaAppPage() {
               )}
             </div>
 
-            {/* Minimal single-line desktop footer (lg+ only) */}
-            <footer className="hidden lg:flex items-center justify-between text-xs opacity-60 mt-10 mx-6 pt-5 pb-6 border-t border-black/[0.08] dark:border-white/[0.1] text-neutral-700 dark:text-neutral-300">
-              <span>Pola — Daily Logic Puzzles</span>
-              <span>
-                Independent portfolio project inspired by LinkedIn Games
-              </span>
-            </footer>
+            <DesktopFooter activeTab={activeTab} onSelectTab={setActiveTab} />
 
             <BottomNav activeTab={activeTab} onSelectTab={setActiveTab} />
           </div>

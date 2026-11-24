@@ -318,6 +318,12 @@ export const dictionary = {
       lightMode: "Light Mode",
       darkMode: "Dark Mode",
     },
+    footer: {
+      tagline: "Bite-sized daily logic puzzles",
+      nextDropPrefix: "Next daily drop in",
+      sourceCode: "Source Code",
+      disclaimer: "Independent portfolio project inspired by LinkedIn Games",
+    },
     pwa: {
       installButton: "Install",
       installAria: "Install Pola App",
@@ -690,6 +696,12 @@ export const dictionary = {
       soundOff: "Senyap",
       lightMode: "Mode Terang",
       darkMode: "Mode Gelap",
+    },
+    footer: {
+      tagline: "Puzzle logika harian serba ringkas",
+      nextDropPrefix: "Puzzle baru dalam",
+      sourceCode: "Kode Sumber",
+      disclaimer: "Proyek portofolio independen terinspirasi dari LinkedIn Games",
     },
     pwa: {
       installButton: "Pasang",
