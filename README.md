@@ -56,7 +56,7 @@
 
 ### Development Workflow
 
-Pola was designed, architected, and iteratively refined using **Google Antigravity** powered by the **Gemini 4 Neon** model—combining rapid UI prototyping, deterministic puzzle-solver engineering, and end-to-end verification in a single workflow.
+Every aspect of Pola's game design, UI/UX ergonomics, and product rules was human-directed and tested across real devices, leveraging **Google Antigravity** (powered by **Gemini 4 Neon**) as an AI pair-programming workflow to accelerate implementation and iteration.
 
 ---
 
