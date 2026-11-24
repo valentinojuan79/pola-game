@@ -1,7 +1,7 @@
 {
   "name": "Pola",
   "short_name": "Pola",
-  "description": "Daily & Unlimited Logic Puzzles crafted with tactile precision.",
+  "description": "6 bite-sized daily logic puzzles — Queens, Tango, Zip, Mini Sudoku, Patches & Fold. Play daily challenges or unlimited mode.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

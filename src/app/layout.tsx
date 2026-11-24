@@ -3,10 +3,28 @@ import "./globals.css";
 import { ThemeProvider } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
 
+const SITE_URL = "https://playpola.vercel.app";
+const SITE_TITLE = "Pola — Daily Logic Puzzles";
+const SITE_DESCRIPTION =
+  "6 bite-sized daily logic puzzles — Queens, Tango, Zip, Mini Sudoku, Patches & Fold. Play daily challenges or unlimited mode.";
+
 export const metadata: Metadata = {
-  title: "Pola — Daily Logic Puzzles",
-  description: "Daily & Unlimited Logic Puzzles crafted with tactile iOS precision.",
+  metadataBase: new URL(SITE_URL),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
   manifest: "/manifest.json",
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    siteName: "Pola",
+    url: SITE_URL,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
