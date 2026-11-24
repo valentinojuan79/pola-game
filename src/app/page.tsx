@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { AnimatePresence } from "framer-motion";
 import { HeaderBar } from "@/components/shell/HeaderBar";
 import { BottomNav, type AppTab } from "@/components/shell/BottomNav";
@@ -125,7 +132,11 @@ type ActiveGameSession =
       reviewCompletion?: DailyCompletion | null;
     };
 
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 export default function PolaAppPage() {
+  const mainRef = useRef<HTMLElement | null>(null);
   const [activeTab, setActiveTab] = useState<AppTab>("today");
   const [activeGame, setActiveGame] = useState<ActiveGameSession | null>(null);
   const [stats, setStats] = useState<LocalProfileStats>(DEFAULT_STATS);
@@ -134,6 +145,38 @@ export default function PolaAppPage() {
   const [dailyRank, setDailyRank] = useState<number | null>(null);
   const [syncVersion, setSyncVersion] = useState(0);
   const [unlimitedNonce, setUnlimitedNonce] = useState(1);
+
+  const resetScrollPosition = useCallback(() => {
+    if (typeof window === "undefined") return;
+
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
+    const mainEl = mainRef.current;
+    if (mainEl) {
+      mainEl.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      mainEl.scrollTop = 0;
+
+      const scrollableContainers = mainEl.querySelectorAll<HTMLElement>(
+        "[data-scroll-container], .overflow-y-auto, .overflow-y-scroll, .overflow-auto"
+      );
+      scrollableContainers.forEach((el) => {
+        el.scrollTo({ top: 0, left: 0, behavior: "instant" });
+        el.scrollTop = 0;
+      });
+    }
+  }, []);
+
+  const activeGameKey = activeGame
+    ? `${activeGame.game}:${activeGame.mode}:${activeGame.puzzle.id}`
+    : null;
+
+  useIsomorphicLayoutEffect(() => {
+    resetScrollPosition();
+    const rafId = window.requestAnimationFrame(resetScrollPosition);
+    return () => window.cancelAnimationFrame(rafId);
+  }, [activeTab, activeGameKey, resetScrollPosition]);
 
   const [todayDateStr, setTodayDateStr] = useState("");
   const todayDifficulty = useMemo(
@@ -540,8 +583,8 @@ export default function PolaAppPage() {
   }, []);
 
   return (
-    <main className="relative min-h-dvh w-full">
-      <AnimatePresence mode="wait">
+    <main ref={mainRef} className="relative min-h-dvh w-full">
+      <AnimatePresence mode="wait" onExitComplete={resetScrollPosition}>
         {activeGame ? (
           <div
             key={`${activeGame.puzzle.id}-${activeGame.mode}`}
