@@ -600,6 +600,9 @@ export function FoldGame({
         open={hasWon}
         game="fold"
         mode={mode}
+        dateStr={dateStr}
+        difficulty={puzzle.difficulty}
+        gridSize={puzzle.size}
         totalSeconds={totalSeconds}
         hintsUsed={hintsUsed}
         streak={streak}

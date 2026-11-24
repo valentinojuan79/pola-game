@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Clock,
@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Infinity as InfinityIcon,
   Route,
+  Share2,
   Sparkles,
   SunMoon,
   Grid3X3,
@@ -19,8 +20,11 @@ import {
   Trophy,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { useTheme } from "@/lib/theme";
 import { feedback } from "@/lib/feedback";
 import type { DailyCompletion, LocalProfileStats } from "@/lib/storage";
+import type { DailyRecapSharePayload } from "@/lib/shareCardRenderer";
+import { VisualShareModal } from "@/components/VisualShareModal";
 import {
   DIFFICULTY_TO_SIZE,
   type QueensDifficulty,
@@ -43,6 +47,7 @@ import { formatTime } from "@/lib/games/queens/engine";
 
 interface TodayHubProps {
   stats: LocalProfileStats;
+  username?: string | null;
   todayDateStr: string;
   todayDifficulty: QueensDifficulty;
   todayZipDifficulty: ZipDifficulty;
@@ -90,6 +95,7 @@ function getCountdownToMidnight(): string {
 
 export function TodayHub({
   stats,
+  username,
   todayDateStr,
   todayDifficulty,
   todayZipDifficulty,
@@ -112,7 +118,9 @@ export function TodayHub({
   onGoToUnlimited,
 }: TodayHubProps) {
   const { locale, t } = useI18n();
+  const { theme } = useTheme();
   const [midnightCountdown, setMidnightCountdown] = useState<string>("--:--:--");
+  const [recapShareOpen, setRecapShareOpen] = useState(false);
 
   const allCleared = Boolean(
     todayQueensCompletion &&
@@ -131,6 +139,87 @@ export function TodayHub({
       (todayPatchesCompletion?.totalSeconds ?? 0) +
       (todayFoldCompletion?.totalSeconds ?? 0)
     : 0;
+
+  const recapPayload = useMemo<DailyRecapSharePayload | null>(() => {
+    if (
+      !todayQueensCompletion ||
+      !todayZipCompletion ||
+      !todayTangoCompletion ||
+      !todayMiniSudokuCompletion ||
+      !todayPatchesCompletion ||
+      !todayFoldCompletion
+    ) {
+      return null;
+    }
+
+    const games: DailyRecapSharePayload["games"] = [
+      {
+        game: "queens",
+        totalSeconds: todayQueensCompletion.totalSeconds,
+        hintsUsed: todayQueensCompletion.hintsUsed,
+        difficulty: todayDifficulty,
+      },
+      {
+        game: "zip",
+        totalSeconds: todayZipCompletion.totalSeconds,
+        hintsUsed: todayZipCompletion.hintsUsed,
+        difficulty: todayZipDifficulty,
+      },
+      {
+        game: "tango",
+        totalSeconds: todayTangoCompletion.totalSeconds,
+        hintsUsed: todayTangoCompletion.hintsUsed,
+        difficulty: todayTangoDifficulty,
+      },
+      {
+        game: "mini-sudoku",
+        totalSeconds: todayMiniSudokuCompletion.totalSeconds,
+        hintsUsed: todayMiniSudokuCompletion.hintsUsed,
+        difficulty: todayMiniSudokuDifficulty,
+      },
+      {
+        game: "patches",
+        totalSeconds: todayPatchesCompletion.totalSeconds,
+        hintsUsed: todayPatchesCompletion.hintsUsed,
+        difficulty: todayPatchesDifficulty,
+      },
+      {
+        game: "fold",
+        totalSeconds: todayFoldCompletion.totalSeconds,
+        hintsUsed: todayFoldCompletion.hintsUsed,
+        difficulty: todayFoldDifficulty,
+      },
+    ];
+
+    const totalHintsUsed = games.reduce((sum, g) => sum + g.hintsUsed, 0);
+
+    return {
+      kind: "recap",
+      dateStr: todayDateStr,
+      totalSeconds: combinedTotalSeconds,
+      totalHintsUsed,
+      streak: stats.currentStreak,
+      username: username ?? null,
+      games,
+    };
+  }, [
+    todayQueensCompletion,
+    todayZipCompletion,
+    todayTangoCompletion,
+    todayMiniSudokuCompletion,
+    todayPatchesCompletion,
+    todayFoldCompletion,
+    todayDifficulty,
+    todayZipDifficulty,
+    todayTangoDifficulty,
+    todayMiniSudokuDifficulty,
+    todayPatchesDifficulty,
+    todayFoldDifficulty,
+    todayDateStr,
+    combinedTotalSeconds,
+    stats.currentStreak,
+    username,
+  ]);
 
   // Client-side countdown to midnight (never runs during SSR -> zero hydration mismatch)
   useEffect(() => {
@@ -268,18 +357,33 @@ export function TodayHub({
             </div>
           </div>
 
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              feedback.pop();
-              onGoToUnlimited();
-            }}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#059669] py-3.5 text-[14px] font-semibold text-white shadow-[0_4px_14px_-4px_rgba(5,150,105,0.32)] transition-colors hover:bg-[#047857] dark:bg-emerald-400/90 dark:text-neutral-950 dark:hover:bg-emerald-300"
-          >
-            <InfinityIcon className="h-4 w-4" />
-            {t.today.playUnlimitedCta}
-          </motion.button>
+          <div className="mt-4 space-y-2">
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                feedback.pop();
+                setRecapShareOpen(true);
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#059669] py-3.5 text-[14px] font-semibold text-white shadow-[0_4px_14px_-4px_rgba(5,150,105,0.32)] transition-colors hover:bg-[#047857] dark:bg-emerald-400/90 dark:text-neutral-950 dark:hover:bg-emerald-300"
+            >
+              <Share2 className="h-4 w-4" />
+              {t.today.shareDailyRecap}
+            </motion.button>
+
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                feedback.pop();
+                onGoToUnlimited();
+              }}
+              className="glass-card flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-[13.5px] font-semibold text-neutral-900 transition-colors hover:bg-white/85 dark:text-white dark:hover:bg-white/[0.1]"
+            >
+              <InfinityIcon className="h-4 w-4" />
+              {t.today.playUnlimitedCta}
+            </motion.button>
+          </div>
         </motion.div>
       )}
 
@@ -607,6 +711,16 @@ export function TodayHub({
           </div>
         </motion.button>
       </div>
+
+      {recapPayload && (
+        <VisualShareModal
+          isOpen={recapShareOpen}
+          onClose={() => setRecapShareOpen(false)}
+          payload={recapPayload}
+          theme={theme}
+          lang={locale}
+        />
+      )}
     </div>
   );
 }

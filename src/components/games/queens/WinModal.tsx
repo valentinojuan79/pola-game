@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Check,
   Clock,
   Crown,
   Flame,
@@ -18,15 +17,24 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { useTheme } from "@/lib/theme";
 import { feedback } from "@/lib/feedback";
 import { formatTime } from "@/lib/games/queens/engine";
 import type { PolaUser } from "@/lib/supabase";
-import type { PolaGameType } from "@/lib/storage";
+import { getTodayDateString, type PolaGameType } from "@/lib/storage";
+import type {
+  ShareDifficulty,
+  SingleGameSharePayload,
+} from "@/lib/shareCardRenderer";
+import { VisualShareModal } from "@/components/VisualShareModal";
 
 interface WinModalProps {
   open: boolean;
   game?: PolaGameType;
   mode: "daily" | "unlimited";
+  dateStr?: string;
+  difficulty?: ShareDifficulty;
+  gridSize?: number;
   totalSeconds: number;
   hintsUsed: number;
   streak: number;
@@ -42,6 +50,9 @@ export function WinModal({
   open,
   game = "queens",
   mode,
+  dateStr,
+  difficulty,
+  gridSize,
   totalSeconds,
   hintsUsed,
   streak,
@@ -52,29 +63,51 @@ export function WinModal({
   onPlayUnlimited,
   onBackHome,
 }: WinModalProps) {
-  const { t } = useI18n();
-  const [copied, setCopied] = useState(false);
+  const { locale, t } = useI18n();
+  const { theme } = useTheme();
+  const [shareOpen, setShareOpen] = useState(false);
 
-  const handleShare = async () => {
-    feedback.pop();
-    try {
-      await navigator.clipboard.writeText(shareText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback textarea copy
-      const ta = document.createElement("textarea");
-      ta.value = shareText;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+  useEffect(() => {
+    if (!open) {
+      setShareOpen(false);
     }
+  }, [open]);
+
+  const sharePayload = useMemo<SingleGameSharePayload>(
+    () => ({
+      kind: "single",
+      game,
+      mode,
+      dateStr: dateStr ?? getTodayDateString(),
+      difficulty,
+      gridSize,
+      totalSeconds,
+      hintsUsed,
+      streak,
+      dailyRank: mode === "daily" ? dailyRank : null,
+      username: user?.displayName ?? null,
+    }),
+    [
+      game,
+      mode,
+      dateStr,
+      difficulty,
+      gridSize,
+      totalSeconds,
+      hintsUsed,
+      streak,
+      dailyRank,
+      user,
+    ]
+  );
+
+  const handleShare = () => {
+    feedback.pop();
+    setShareOpen(true);
   };
 
   return (
+    <>
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-5">
@@ -264,17 +297,8 @@ export function WinModal({
                     : "bg-[#D97706] shadow-[0_4px_14px_-4px_rgba(180,83,9,0.3)] hover:bg-[#B45309] dark:bg-amber-500/90 dark:hover:bg-amber-400"
                 }`}
               >
-                {copied ? (
-                  <>
-                    <Check className="h-4 w-4 text-white dark:text-neutral-950" />
-                    {t.win.copied}
-                  </>
-                ) : (
-                  <>
-                    <Share2 className="h-4 w-4" />
-                    {t.win.shareResult}
-                  </>
-                )}
+                <Share2 className="h-4 w-4" />
+                {t.win.shareResult}
               </button>
 
               <button
@@ -304,5 +328,15 @@ export function WinModal({
         </div>
       )}
     </AnimatePresence>
+
+    <VisualShareModal
+      isOpen={open && shareOpen}
+      onClose={() => setShareOpen(false)}
+      payload={sharePayload}
+      theme={theme}
+      lang={locale}
+      shareText={shareText}
+    />
+    </>
   );
 }

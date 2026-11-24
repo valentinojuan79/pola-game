@@ -559,6 +559,9 @@ export function PatchesGame({
         open={hasWon}
         game="patches"
         mode={mode}
+        dateStr={dateStr}
+        difficulty={puzzle.difficulty}
+        gridSize={puzzle.size}
         totalSeconds={totalSeconds}
         hintsUsed={hintsUsed}
         streak={streak}

@@ -525,6 +525,7 @@ export default function PolaAppPage() {
               {activeTab === "today" && (
                 <TodayHub
                   stats={stats}
+                  username={user?.displayName ?? null}
                   todayDateStr={todayDateStr}
                   todayDifficulty={todayDifficulty}
                   todayZipDifficulty={todayZipDifficulty}

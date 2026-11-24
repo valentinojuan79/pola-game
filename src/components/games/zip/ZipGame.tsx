@@ -514,6 +514,9 @@ export function ZipGame({
         open={hasWon}
         game="zip"
         mode={mode}
+        dateStr={dateStr}
+        difficulty={puzzle.difficulty}
+        gridSize={puzzle.size}
         totalSeconds={elapsedSeconds}
         hintsUsed={hintsUsed}
         streak={streak}

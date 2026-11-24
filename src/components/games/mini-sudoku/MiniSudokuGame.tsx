@@ -799,6 +799,9 @@ export function MiniSudokuGame({
         open={hasWon}
         game="mini-sudoku"
         mode={mode}
+        dateStr={dateStr}
+        difficulty={puzzle.difficulty}
+        gridSize={6}
         totalSeconds={elapsedSeconds}
         hintsUsed={hintsUsed}
         streak={streak}

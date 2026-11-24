@@ -650,6 +650,9 @@ export function TangoGame({
         open={hasWon}
         game="tango"
         mode={mode}
+        dateStr={dateStr}
+        difficulty={puzzle.difficulty}
+        gridSize={puzzle.size}
         totalSeconds={elapsedSeconds}
         hintsUsed={hintsUsed}
         streak={streak}

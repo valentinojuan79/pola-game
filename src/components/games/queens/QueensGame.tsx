@@ -505,7 +505,11 @@ export function QueensGame({
       {/* Bubble-Pop Win Modal */}
       <WinModal
         open={hasWon}
+        game="queens"
         mode={mode}
+        dateStr={dateStr}
+        difficulty={puzzle.difficulty}
+        gridSize={puzzle.size}
         totalSeconds={totalSeconds}
         hintsUsed={hintsUsed}
         streak={streak}
