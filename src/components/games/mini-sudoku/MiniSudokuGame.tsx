@@ -502,10 +502,10 @@ export function MiniSudokuGame({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.18 }}
-      className="flex min-h-dvh flex-col justify-between px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
+      className="flex min-h-dvh flex-col px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
     >
       {/* Dead-center 3-column Game Navigation Bar */}
-      <div className="relative z-10 grid h-auto grid-cols-[72px_1fr_72px] sm:grid-cols-[84px_1fr_84px] items-center gap-1 pt-[calc(env(safe-area-inset-top)+1rem)] pb-3">
+      <div className="relative z-10 grid h-auto grid-cols-[72px_1fr_72px] sm:grid-cols-[84px_1fr_84px] items-center gap-1 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-2">
         <button
           type="button"
           onClick={() => {
@@ -549,8 +549,8 @@ export function MiniSudokuGame({
         </button>
       </div>
 
-      {/* Center Board Area + Floating Smart Hint Pill */}
-      <div className="my-auto flex flex-col items-center">
+      {/* Cohesive Vertically Centered Board + Counter + Controls Stack */}
+      <div className="flex flex-1 flex-col items-center justify-center">
         <AnimatePresence initial={false}>
           {activeHint && formattedHint && (
             <motion.div
@@ -634,121 +634,123 @@ export function MiniSudokuGame({
             </span>
           )}
         </div>
+
+        {/* Thumb-Friendly Number Pad (1-6) + Action Tools or Solved Daily Review Bar */}
+        {isReviewMode ? (
+          <div className="mt-3.5 w-full max-w-[376px]">
+            <DailyReviewBar
+              game="mini-sudoku"
+              dateStr={dateStr}
+              difficulty={puzzle.difficulty}
+              gridSize={6}
+              totalSeconds={reviewCompletion?.totalSeconds ?? elapsedSeconds}
+              hintsUsed={reviewCompletion?.hintsUsed ?? hintsUsed}
+              streak={streak}
+              dailyRank={dailyRank}
+              username={user?.displayName ?? null}
+              shareText={shareText}
+              onPlayUnlimited={onPlayUnlimitedNext}
+              onBackHome={onExit}
+            />
+          </div>
+        ) : (
+          <div className="mt-3.5 w-full max-w-[376px]">
+            {/* 1-6 Vertical Rectangular Glass Number Pad */}
+            <div className="grid grid-cols-6 gap-1.5">
+              {DIGITS.map((d) => {
+                const isDone = completedDigits.has(d);
+                return (
+                  <motion.button
+                    key={d}
+                    type="button"
+                    whileTap={{ scale: 0.92 }}
+                    disabled={hasWon}
+                    onClick={() => handleDigitInput(d)}
+                    aria-label={`Number ${d}${isDone ? " completed" : ""}`}
+                    className={`glass-card relative flex h-14 min-h-[56px] items-center justify-center rounded-2xl font-display tabular-nums text-xl font-bold transition-all disabled:opacity-40 ${
+                      isDone && !notesMode
+                        ? "border-emerald-500/20 bg-emerald-500/[0.06] text-neutral-400 opacity-55 dark:border-emerald-400/15 dark:bg-emerald-400/[0.06] dark:text-neutral-500"
+                        : notesMode
+                        ? "border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-800 hover:bg-emerald-500/[0.14] dark:border-emerald-400/25 dark:bg-emerald-400/[0.1] dark:text-emerald-200"
+                        : "text-neutral-900 hover:border-emerald-500/30 hover:bg-white/90 dark:text-white dark:hover:border-emerald-400/30 dark:hover:bg-neutral-800/80"
+                    }`}
+                  >
+                    <span>{d}</span>
+                    {isDone && (
+                      <span className="absolute top-1.5 right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-600/85 text-white dark:bg-emerald-400/90 dark:text-neutral-950">
+                        <Check className="h-2.5 w-2.5 stroke-[3]" />
+                      </span>
+                    )}
+                  </motion.button>
+                );
+              })}
+            </div>
+
+            {/* 5 Action Controls: Notes, Erase, Undo, Hint, Reset */}
+            <div className="mt-2.5 grid grid-cols-5 gap-1.5 sm:gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  feedback.click();
+                  setNotesMode((prev) => !prev);
+                }}
+                disabled={hasWon}
+                aria-pressed={notesMode}
+                className={`glass-card flex flex-col items-center justify-center gap-1 rounded-[18px] py-2.5 text-[10px] sm:text-[10.5px] font-medium transition-all active:scale-95 disabled:opacity-40 ${
+                  notesMode
+                    ? "border-emerald-500/45 bg-emerald-500/[0.16] text-emerald-900 dark:border-emerald-400/45 dark:bg-emerald-400/[0.18] dark:text-emerald-100"
+                    : "text-neutral-800 dark:text-neutral-200"
+                }`}
+              >
+                <Pencil className="h-[17px] w-[17px]" />
+                <span className="whitespace-nowrap">{t.miniSudoku.notes}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleErase}
+                disabled={hasWon || !selectedCell || selectedIsLocked}
+                className="glass-card flex flex-col items-center justify-center gap-1 rounded-[18px] py-2.5 text-[10px] sm:text-[10.5px] font-medium text-neutral-800 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-200"
+              >
+                <Eraser className="h-[17px] w-[17px]" />
+                <span className="whitespace-nowrap">{t.miniSudoku.erase}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleUndo}
+                disabled={board.history.length === 0 || hasWon}
+                className="glass-card flex flex-col items-center justify-center gap-1 rounded-[18px] py-2.5 text-[10px] sm:text-[10.5px] font-medium text-neutral-800 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-200"
+              >
+                <Undo2 className="h-[17px] w-[17px]" />
+                <span className="whitespace-nowrap">{t.miniSudoku.undo}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleHint}
+                disabled={hasWon || hintCooldown > 0}
+                className="glass-card relative flex flex-col items-center justify-center gap-1 overflow-hidden rounded-[18px] py-2.5 text-[10px] sm:text-[10.5px] font-medium text-emerald-700 transition-transform active:scale-95 disabled:opacity-50 dark:text-emerald-300"
+              >
+                <Lightbulb className="h-[17px] w-[17px]" />
+                <span className="whitespace-nowrap tabular-nums">
+                  {hintCooldown > 0 ? `${hintCooldown}s` : t.miniSudoku.hint}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleReset}
+                disabled={hasWon || !hasAnyProgress}
+                className="glass-card flex flex-col items-center justify-center gap-1 rounded-[18px] py-2.5 text-[10px] sm:text-[10.5px] font-medium text-neutral-700 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-300"
+              >
+                <RotateCcw className="h-[17px] w-[17px]" />
+                <span className="whitespace-nowrap">{t.miniSudoku.reset}</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* Thumb-Friendly Bottom Number Pad (1-6) + Action Tools or Solved Daily Review Bar */}
-      {isReviewMode ? (
-        <DailyReviewBar
-          game="mini-sudoku"
-          dateStr={dateStr}
-          difficulty={puzzle.difficulty}
-          gridSize={6}
-          totalSeconds={reviewCompletion?.totalSeconds ?? elapsedSeconds}
-          hintsUsed={reviewCompletion?.hintsUsed ?? hintsUsed}
-          streak={streak}
-          dailyRank={dailyRank}
-          username={user?.displayName ?? null}
-          shareText={shareText}
-          onPlayUnlimited={onPlayUnlimitedNext}
-          onBackHome={onExit}
-        />
-      ) : (
-        <div className="mt-3 space-y-2.5">
-          {/* 1-6 Glass Number Pad */}
-          <div className="grid grid-cols-6 gap-1.5">
-            {DIGITS.map((d) => {
-              const isDone = completedDigits.has(d);
-              return (
-                <motion.button
-                  key={d}
-                  type="button"
-                  whileTap={{ scale: 0.92 }}
-                  disabled={hasWon}
-                  onClick={() => handleDigitInput(d)}
-                  aria-label={`Number ${d}${isDone ? " completed" : ""}`}
-                  className={`glass-card relative flex h-14 min-h-[56px] items-center justify-center rounded-[18px] font-display tabular-nums text-xl sm:text-2xl font-bold transition-all disabled:opacity-40 ${
-                    isDone && !notesMode
-                      ? "border-emerald-500/20 bg-emerald-500/[0.06] text-neutral-400 opacity-55 dark:border-emerald-400/15 dark:bg-emerald-400/[0.06] dark:text-neutral-500"
-                      : notesMode
-                      ? "border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-800 hover:bg-emerald-500/[0.14] dark:border-emerald-400/25 dark:bg-emerald-400/[0.1] dark:text-emerald-200"
-                      : "text-neutral-900 hover:border-emerald-500/30 hover:bg-white/90 dark:text-white dark:hover:border-emerald-400/30 dark:hover:bg-neutral-800/80"
-                  }`}
-                >
-                  <span>{d}</span>
-                  {isDone && (
-                    <span className="absolute top-1.5 right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-600/85 text-white dark:bg-emerald-400/90 dark:text-neutral-950">
-                      <Check className="h-2.5 w-2.5 stroke-[3]" />
-                    </span>
-                  )}
-                </motion.button>
-              );
-            })}
-          </div>
-
-          {/* 5 Action Controls: Notes, Erase, Undo, Hint, Reset */}
-          <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                feedback.click();
-                setNotesMode((prev) => !prev);
-              }}
-              disabled={hasWon}
-              aria-pressed={notesMode}
-              className={`glass-card flex flex-col items-center justify-center gap-1 rounded-[18px] py-2.5 text-[10px] sm:text-[10.5px] font-medium transition-all active:scale-95 disabled:opacity-40 ${
-                notesMode
-                  ? "border-emerald-500/45 bg-emerald-500/[0.16] text-emerald-900 dark:border-emerald-400/45 dark:bg-emerald-400/[0.18] dark:text-emerald-100"
-                  : "text-neutral-800 dark:text-neutral-200"
-              }`}
-            >
-              <Pencil className="h-[17px] w-[17px]" />
-              <span className="whitespace-nowrap">{t.miniSudoku.notes}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleErase}
-              disabled={hasWon || !selectedCell || selectedIsLocked}
-              className="glass-card flex flex-col items-center justify-center gap-1 rounded-[18px] py-2.5 text-[10px] sm:text-[10.5px] font-medium text-neutral-800 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-200"
-            >
-              <Eraser className="h-[17px] w-[17px]" />
-              <span className="whitespace-nowrap">{t.miniSudoku.erase}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleUndo}
-              disabled={board.history.length === 0 || hasWon}
-              className="glass-card flex flex-col items-center justify-center gap-1 rounded-[18px] py-2.5 text-[10px] sm:text-[10.5px] font-medium text-neutral-800 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-200"
-            >
-              <Undo2 className="h-[17px] w-[17px]" />
-              <span className="whitespace-nowrap">{t.miniSudoku.undo}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleHint}
-              disabled={hasWon || hintCooldown > 0}
-              className="glass-card relative flex flex-col items-center justify-center gap-1 overflow-hidden rounded-[18px] py-2.5 text-[10px] sm:text-[10.5px] font-medium text-emerald-700 transition-transform active:scale-95 disabled:opacity-50 dark:text-emerald-300"
-            >
-              <Lightbulb className="h-[17px] w-[17px]" />
-              <span className="whitespace-nowrap tabular-nums">
-                {hintCooldown > 0 ? `${hintCooldown}s` : t.miniSudoku.hint}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleReset}
-              disabled={hasWon || !hasAnyProgress}
-              className="glass-card flex flex-col items-center justify-center gap-1 rounded-[18px] py-2.5 text-[10px] sm:text-[10.5px] font-medium text-neutral-700 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-300"
-            >
-              <RotateCcw className="h-[17px] w-[17px]" />
-              <span className="whitespace-nowrap">{t.miniSudoku.reset}</span>
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* How to Play Glass Sheet */}
       <AnimatePresence>
