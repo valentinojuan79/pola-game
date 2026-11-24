@@ -57,6 +57,7 @@ export function LeaderboardHub({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!todayDateStr) return;
     let active = true;
     setLoading(true);
 

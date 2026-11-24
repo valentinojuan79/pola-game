@@ -135,33 +135,40 @@ export default function PolaAppPage() {
   const [syncVersion, setSyncVersion] = useState(0);
   const [unlimitedNonce, setUnlimitedNonce] = useState(1);
 
-  const todayDateStr = useMemo(() => getTodayDateString(), []);
+  const [todayDateStr, setTodayDateStr] = useState("");
   const todayDifficulty = useMemo(
-    () => getDifficultyForDateString(todayDateStr),
+    () => (todayDateStr ? getDifficultyForDateString(todayDateStr) : "easy"),
     [todayDateStr]
   );
   const todayZipDifficulty = useMemo(
-    () => getZipDifficultyForDateString(todayDateStr),
+    () => (todayDateStr ? getZipDifficultyForDateString(todayDateStr) : "easy"),
     [todayDateStr]
   );
   const todayTangoDifficulty = useMemo(
-    () => getTangoDifficultyForDateString(todayDateStr),
+    () =>
+      todayDateStr ? getTangoDifficultyForDateString(todayDateStr) : "easy",
     [todayDateStr]
   );
   const todayMiniSudokuDifficulty = useMemo(
-    () => getMiniSudokuDifficultyForDateString(todayDateStr),
+    () =>
+      todayDateStr
+        ? getMiniSudokuDifficultyForDateString(todayDateStr)
+        : "easy",
     [todayDateStr]
   );
   const todayPatchesDifficulty = useMemo(
-    () => getPatchesDifficultyForDateString(todayDateStr),
+    () =>
+      todayDateStr ? getPatchesDifficultyForDateString(todayDateStr) : "easy",
     [todayDateStr]
   );
   const todayFoldDifficulty = useMemo(
-    () => getFoldDifficultyForDateString(todayDateStr),
+    () =>
+      todayDateStr ? getFoldDifficultyForDateString(todayDateStr) : "easy",
     [todayDateStr]
   );
 
   useEffect(() => {
+    setTodayDateStr(getTodayDateString());
     initDevBypassFromUrl();
     const localStats = loadStats();
     setStats(localStats);
@@ -220,7 +227,8 @@ export default function PolaAppPage() {
 
   const handlePlayDailyQueens = useCallback(() => {
     setDailyRank(null);
-    const puzzle = getDailyQueensPuzzle(todayDateStr);
+    const dateKey = todayDateStr || getTodayDateString();
+    const puzzle = getDailyQueensPuzzle(dateKey);
     setActiveGame({
       game: "queens",
       mode: "daily",
@@ -245,7 +253,8 @@ export default function PolaAppPage() {
 
   const handlePlayDailyZip = useCallback(() => {
     setDailyRank(null);
-    const puzzle = getDailyZipPuzzle(todayDateStr);
+    const dateKey = todayDateStr || getTodayDateString();
+    const puzzle = getDailyZipPuzzle(dateKey);
     setActiveGame({
       game: "zip",
       mode: "daily",
@@ -270,7 +279,8 @@ export default function PolaAppPage() {
 
   const handlePlayDailyTango = useCallback(() => {
     setDailyRank(null);
-    const puzzle = getDailyTangoPuzzle(todayDateStr);
+    const dateKey = todayDateStr || getTodayDateString();
+    const puzzle = getDailyTangoPuzzle(dateKey);
     setActiveGame({
       game: "tango",
       mode: "daily",
@@ -295,7 +305,8 @@ export default function PolaAppPage() {
 
   const handlePlayDailyMiniSudoku = useCallback(() => {
     setDailyRank(null);
-    const puzzle = getDailyMiniSudokuPuzzle(todayDateStr);
+    const dateKey = todayDateStr || getTodayDateString();
+    const puzzle = getDailyMiniSudokuPuzzle(dateKey);
     setActiveGame({
       game: "mini-sudoku",
       mode: "daily",
@@ -320,7 +331,8 @@ export default function PolaAppPage() {
 
   const handlePlayDailyPatches = useCallback(() => {
     setDailyRank(null);
-    const puzzle = getDailyPatchesPuzzle(todayDateStr);
+    const dateKey = todayDateStr || getTodayDateString();
+    const puzzle = getDailyPatchesPuzzle(dateKey);
     setActiveGame({
       game: "patches",
       mode: "daily",
@@ -345,7 +357,8 @@ export default function PolaAppPage() {
 
   const handlePlayDailyFold = useCallback(() => {
     setDailyRank(null);
-    const puzzle = getDailyFoldPuzzle(todayDateStr);
+    const dateKey = todayDateStr || getTodayDateString();
+    const puzzle = getDailyFoldPuzzle(dateKey);
     setActiveGame({
       game: "fold",
       mode: "daily",

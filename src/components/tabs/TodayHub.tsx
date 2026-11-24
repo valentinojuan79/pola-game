@@ -135,10 +135,15 @@ export function TodayHub({
 }: TodayHubProps) {
   const { locale, t } = useI18n();
   const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [midnightCountdown, setMidnightCountdown] = useState<string>("--:--:--");
   const [recapShareOpen, setRecapShareOpen] = useState(false);
   const [topRanks, setTopRanks] = useState<LeaderboardEntry[]>([]);
   const [ranksLoading, setRanksLoading] = useState(true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const completedList = useMemo(
     () =>
@@ -251,6 +256,7 @@ export function TodayHub({
 
   // Live top-3 snapshot for the desktop info strip
   useEffect(() => {
+    if (!todayDateStr) return;
     let active = true;
     setRanksLoading(true);
     fetchOverallDailyLeaderboard(todayDateStr, userId ?? undefined)
@@ -281,23 +287,30 @@ export function TodayHub({
     return () => clearInterval(interval);
   }, [allCleared]);
 
-  const now = new Date();
-  const hour = now.getHours();
-  const greeting =
-    hour < 12
-      ? t.greetings.morning
-      : hour < 18
-      ? t.greetings.afternoon
-      : t.greetings.evening;
-
-  const formattedDate = new Intl.DateTimeFormat(
-    locale === "id" ? "id-ID" : "en-US",
-    {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
+  const { greeting, formattedDate } = useMemo(() => {
+    if (!mounted) {
+      return { greeting: "\u00A0", formattedDate: "\u00A0" };
     }
-  ).format(now);
+    const now = new Date();
+    const hour = now.getHours();
+    const nextGreeting =
+      hour < 12
+        ? t.greetings.morning
+        : hour < 18
+        ? t.greetings.afternoon
+        : t.greetings.evening;
+
+    const nextFormattedDate = new Intl.DateTimeFormat(
+      locale === "id" ? "id-ID" : "en-US",
+      {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      }
+    ).format(now);
+
+    return { greeting: nextGreeting, formattedDate: nextFormattedDate };
+  }, [mounted, locale, t]);
 
   const queensGridSize = DIFFICULTY_TO_SIZE[todayDifficulty];
   const queensDiffLabel = t.unlimited.difficulties[todayDifficulty].label;
