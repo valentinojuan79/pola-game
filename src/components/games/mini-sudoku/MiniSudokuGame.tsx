@@ -427,17 +427,29 @@ export function MiniSudokuGame({
     }
   }, [hasWon, hintCooldown, board.grid, puzzle]);
 
-  // Optional keyboard navigation & input for desktop users
+  // Lightweight keyboard navigation & input for desktop users
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (hasWon || showRules) return;
-      if (e.key >= "1" && e.key <= "6") {
+      if (hasWon || showRules || isReviewMode) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key >= "1" && e.key <= "6" && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         handleDigitInput(Number(e.key) as MiniSudokuDigit);
       } else if (e.key === "Backspace" || e.key === "Delete") {
         e.preventDefault();
         handleErase();
-      } else if (e.key === "n" || e.key === "N") {
+      } else if (e.key === "z" || e.key === "Z") {
+        e.preventDefault();
+        handleUndo();
+      } else if ((e.key === "n" || e.key === "N") && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         feedback.click();
         setNotesMode((prev) => !prev);
@@ -452,7 +464,15 @@ export function MiniSudokuGame({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [hasWon, showRules, selectedCell, handleDigitInput, handleErase]);
+  }, [
+    hasWon,
+    showRules,
+    isReviewMode,
+    selectedCell,
+    handleDigitInput,
+    handleErase,
+    handleUndo,
+  ]);
 
   const filledCount = useMemo(() => countFilledCells(board.grid), [board.grid]);
   const hasAnyProgress = useMemo(

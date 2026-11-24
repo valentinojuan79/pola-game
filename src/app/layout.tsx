@@ -90,8 +90,8 @@ export default function RootLayout({
 
         <ThemeProvider>
           <I18nProvider>
-            {/* Mobile-first centered shell on tablets and desktop */}
-            <div className="relative mx-auto min-h-dvh w-full max-w-[440px] font-sans md:border-x md:border-black/[0.06] md:dark:border-white/[0.08]">
+            {/* Mobile-first centered shell on mobile/tablet; spacious native desktop container on lg+ */}
+            <div className="relative mx-auto min-h-dvh w-full max-w-[440px] font-sans md:border-x md:border-black/[0.06] md:dark:border-white/[0.08] lg:max-w-5xl lg:border-x-0">
               {children}
             </div>
           </I18nProvider>

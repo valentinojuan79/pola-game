@@ -130,7 +130,7 @@ export function LeaderboardHub({
       : t.leaderboard.emptyBoard;
 
   return (
-    <div className="px-5 pt-2 pb-28">
+    <div className="px-5 pt-2 pb-28 lg:mx-auto lg:max-w-2xl lg:px-6 lg:pb-12">
       <h1 className="font-display text-[28px] font-bold tracking-tight text-neutral-950 dark:text-white">
         {t.leaderboard.title}
       </h1>

@@ -486,123 +486,128 @@ export default function PolaAppPage() {
   return (
     <main className="relative min-h-dvh w-full">
       <AnimatePresence mode="wait">
-        {activeGame?.game === "queens" ? (
-          <QueensGame
+        {activeGame ? (
+          <div
             key={`${activeGame.puzzle.id}-${activeGame.mode}`}
-            puzzle={activeGame.puzzle}
-            mode={activeGame.mode}
-            dateStr={todayDateStr}
-            streak={stats.currentStreak}
-            user={user}
-            dailyRank={dailyRank}
-            reviewCompletion={activeGame.reviewCompletion ?? null}
-            onComplete={handleGameComplete}
-            onExit={() => setActiveGame(null)}
-            onPlayUnlimitedNext={(nextDifficulty) =>
-              handlePlayUnlimitedQueens(
-                nextDifficulty ?? activeGame.puzzle.difficulty
-              )
-            }
-            onOpenAuth={() => setAuthOpen(true)}
-          />
-        ) : activeGame?.game === "zip" ? (
-          <ZipGame
-            key={`${activeGame.puzzle.id}-${activeGame.mode}`}
-            puzzle={activeGame.puzzle}
-            mode={activeGame.mode}
-            dateStr={todayDateStr}
-            streak={stats.currentStreak}
-            user={user}
-            dailyRank={dailyRank}
-            reviewCompletion={activeGame.reviewCompletion ?? null}
-            onComplete={handleGameComplete}
-            onExit={() => setActiveGame(null)}
-            onPlayUnlimitedNext={(nextDifficulty) =>
-              handlePlayUnlimitedZip(
-                nextDifficulty ?? activeGame.puzzle.difficulty
-              )
-            }
-            onOpenAuth={() => setAuthOpen(true)}
-          />
-        ) : activeGame?.game === "tango" ? (
-          <TangoGame
-            key={`${activeGame.puzzle.id}-${activeGame.mode}`}
-            puzzle={activeGame.puzzle}
-            mode={activeGame.mode}
-            dateStr={todayDateStr}
-            streak={stats.currentStreak}
-            user={user}
-            dailyRank={dailyRank}
-            reviewCompletion={activeGame.reviewCompletion ?? null}
-            onComplete={handleGameComplete}
-            onExit={() => setActiveGame(null)}
-            onPlayUnlimitedNext={(nextDifficulty) =>
-              handlePlayUnlimitedTango(
-                nextDifficulty ?? activeGame.puzzle.difficulty
-              )
-            }
-            onOpenAuth={() => setAuthOpen(true)}
-          />
-        ) : activeGame?.game === "mini-sudoku" ? (
-          <MiniSudokuGame
-            key={`${activeGame.puzzle.id}-${activeGame.mode}`}
-            puzzle={activeGame.puzzle}
-            mode={activeGame.mode}
-            dateStr={todayDateStr}
-            streak={stats.currentStreak}
-            user={user}
-            dailyRank={dailyRank}
-            reviewCompletion={activeGame.reviewCompletion ?? null}
-            onComplete={handleGameComplete}
-            onExit={() => setActiveGame(null)}
-            onPlayUnlimitedNext={(nextDifficulty) =>
-              handlePlayUnlimitedMiniSudoku(
-                nextDifficulty ?? activeGame.puzzle.difficulty
-              )
-            }
-            onOpenAuth={() => setAuthOpen(true)}
-          />
-        ) : activeGame?.game === "patches" ? (
-          <PatchesGame
-            key={`${activeGame.puzzle.id}-${activeGame.mode}`}
-            puzzle={activeGame.puzzle}
-            mode={activeGame.mode}
-            dateStr={todayDateStr}
-            streak={stats.currentStreak}
-            user={user}
-            dailyRank={dailyRank}
-            reviewCompletion={activeGame.reviewCompletion ?? null}
-            onComplete={handleGameComplete}
-            onExit={() => setActiveGame(null)}
-            onPlayUnlimitedNext={(nextDifficulty) =>
-              handlePlayUnlimitedPatches(
-                nextDifficulty ?? activeGame.puzzle.difficulty
-              )
-            }
-            onOpenAuth={() => setAuthOpen(true)}
-          />
-        ) : activeGame?.game === "fold" ? (
-          <FoldGame
-            key={`${activeGame.puzzle.id}-${activeGame.mode}`}
-            puzzle={activeGame.puzzle}
-            mode={activeGame.mode}
-            dateStr={todayDateStr}
-            streak={stats.currentStreak}
-            user={user}
-            dailyRank={dailyRank}
-            reviewCompletion={activeGame.reviewCompletion ?? null}
-            onComplete={handleGameComplete}
-            onExit={() => setActiveGame(null)}
-            onPlayUnlimitedNext={(nextDifficulty) =>
-              handlePlayUnlimitedFold(
-                nextDifficulty ?? activeGame.puzzle.difficulty
-              )
-            }
-            onOpenAuth={() => setAuthOpen(true)}
-          />
+            className="mx-auto w-full max-w-[460px]"
+          >
+            {activeGame.game === "queens" ? (
+              <QueensGame
+                puzzle={activeGame.puzzle}
+                mode={activeGame.mode}
+                dateStr={todayDateStr}
+                streak={stats.currentStreak}
+                user={user}
+                dailyRank={dailyRank}
+                reviewCompletion={activeGame.reviewCompletion ?? null}
+                onComplete={handleGameComplete}
+                onExit={() => setActiveGame(null)}
+                onPlayUnlimitedNext={(nextDifficulty) =>
+                  handlePlayUnlimitedQueens(
+                    nextDifficulty ?? activeGame.puzzle.difficulty
+                  )
+                }
+                onOpenAuth={() => setAuthOpen(true)}
+              />
+            ) : activeGame.game === "zip" ? (
+              <ZipGame
+                puzzle={activeGame.puzzle}
+                mode={activeGame.mode}
+                dateStr={todayDateStr}
+                streak={stats.currentStreak}
+                user={user}
+                dailyRank={dailyRank}
+                reviewCompletion={activeGame.reviewCompletion ?? null}
+                onComplete={handleGameComplete}
+                onExit={() => setActiveGame(null)}
+                onPlayUnlimitedNext={(nextDifficulty) =>
+                  handlePlayUnlimitedZip(
+                    nextDifficulty ?? activeGame.puzzle.difficulty
+                  )
+                }
+                onOpenAuth={() => setAuthOpen(true)}
+              />
+            ) : activeGame.game === "tango" ? (
+              <TangoGame
+                puzzle={activeGame.puzzle}
+                mode={activeGame.mode}
+                dateStr={todayDateStr}
+                streak={stats.currentStreak}
+                user={user}
+                dailyRank={dailyRank}
+                reviewCompletion={activeGame.reviewCompletion ?? null}
+                onComplete={handleGameComplete}
+                onExit={() => setActiveGame(null)}
+                onPlayUnlimitedNext={(nextDifficulty) =>
+                  handlePlayUnlimitedTango(
+                    nextDifficulty ?? activeGame.puzzle.difficulty
+                  )
+                }
+                onOpenAuth={() => setAuthOpen(true)}
+              />
+            ) : activeGame.game === "mini-sudoku" ? (
+              <MiniSudokuGame
+                puzzle={activeGame.puzzle}
+                mode={activeGame.mode}
+                dateStr={todayDateStr}
+                streak={stats.currentStreak}
+                user={user}
+                dailyRank={dailyRank}
+                reviewCompletion={activeGame.reviewCompletion ?? null}
+                onComplete={handleGameComplete}
+                onExit={() => setActiveGame(null)}
+                onPlayUnlimitedNext={(nextDifficulty) =>
+                  handlePlayUnlimitedMiniSudoku(
+                    nextDifficulty ?? activeGame.puzzle.difficulty
+                  )
+                }
+                onOpenAuth={() => setAuthOpen(true)}
+              />
+            ) : activeGame.game === "patches" ? (
+              <PatchesGame
+                puzzle={activeGame.puzzle}
+                mode={activeGame.mode}
+                dateStr={todayDateStr}
+                streak={stats.currentStreak}
+                user={user}
+                dailyRank={dailyRank}
+                reviewCompletion={activeGame.reviewCompletion ?? null}
+                onComplete={handleGameComplete}
+                onExit={() => setActiveGame(null)}
+                onPlayUnlimitedNext={(nextDifficulty) =>
+                  handlePlayUnlimitedPatches(
+                    nextDifficulty ?? activeGame.puzzle.difficulty
+                  )
+                }
+                onOpenAuth={() => setAuthOpen(true)}
+              />
+            ) : (
+              <FoldGame
+                puzzle={activeGame.puzzle}
+                mode={activeGame.mode}
+                dateStr={todayDateStr}
+                streak={stats.currentStreak}
+                user={user}
+                dailyRank={dailyRank}
+                reviewCompletion={activeGame.reviewCompletion ?? null}
+                onComplete={handleGameComplete}
+                onExit={() => setActiveGame(null)}
+                onPlayUnlimitedNext={(nextDifficulty) =>
+                  handlePlayUnlimitedFold(
+                    nextDifficulty ?? activeGame.puzzle.difficulty
+                  )
+                }
+                onOpenAuth={() => setAuthOpen(true)}
+              />
+            )}
+          </div>
         ) : (
           <div key="hub-shell" className="flex min-h-dvh flex-col">
-            <HeaderBar />
+            <HeaderBar
+              activeTab={activeTab}
+              onSelectTab={setActiveTab}
+              streak={stats.currentStreak}
+            />
 
             <div className="flex-1">
               {activeTab === "today" && (

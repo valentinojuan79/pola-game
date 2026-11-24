@@ -41,7 +41,7 @@ export function UnlimitedHub({
   const [foldDiff, setFoldDiff] = useState<FoldDifficulty>("easy");
 
   return (
-    <div className="px-5 pt-2 pb-28">
+    <div className="px-5 pt-2 pb-28 lg:px-6 lg:pb-12">
       <h1 className="font-display text-[28px] font-bold tracking-tight text-neutral-950 dark:text-white">
         {t.unlimited.title}
       </h1>
@@ -49,8 +49,9 @@ export function UnlimitedHub({
         {t.unlimited.subtitle}
       </p>
 
+      <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
       {/* Queens Unlimited Card — Calm Muted Amber Tinted Glass */}
-      <div className="glass-card mt-5 rounded-[26px] border-amber-600/[0.18] bg-gradient-to-br from-amber-500/[0.05] via-white/75 to-white/65 p-5 dark:border-amber-400/[0.16] dark:from-amber-500/[0.07] dark:via-neutral-900/60 dark:to-neutral-900/55">
+      <div className="glass-card flex flex-col justify-between rounded-[26px] border-amber-600/[0.18] bg-gradient-to-br from-amber-500/[0.05] via-white/75 to-white/65 p-5 dark:border-amber-400/[0.16] dark:from-amber-500/[0.07] dark:via-neutral-900/60 dark:to-neutral-900/55">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-[15px] bg-amber-500/[0.12] text-amber-700 border border-amber-600/20 dark:bg-amber-400/15 dark:text-amber-300 dark:border-amber-400/20">
             <Crown className="h-5 w-5" />
@@ -115,7 +116,7 @@ export function UnlimitedHub({
       </div>
 
       {/* Zip Unlimited Card — Calm Muted Ocean Blue Tinted Glass */}
-      <div className="glass-card mt-4 rounded-[26px] border-sky-600/[0.18] bg-gradient-to-br from-sky-500/[0.05] via-white/75 to-white/65 p-5 dark:border-sky-400/[0.16] dark:from-sky-500/[0.07] dark:via-neutral-900/60 dark:to-neutral-900/55">
+      <div className="glass-card flex flex-col justify-between rounded-[26px] border-sky-600/[0.18] bg-gradient-to-br from-sky-500/[0.05] via-white/75 to-white/65 p-5 dark:border-sky-400/[0.16] dark:from-sky-500/[0.07] dark:via-neutral-900/60 dark:to-neutral-900/55">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-[15px] bg-sky-500/[0.12] text-sky-700 border border-sky-600/20 dark:bg-sky-400/15 dark:text-sky-300 dark:border-sky-400/20">
             <Route className="h-5 w-5" />
@@ -180,7 +181,7 @@ export function UnlimitedHub({
       </div>
 
       {/* Tango Unlimited Card — Calm Muted Warm Orange Tinted Glass */}
-      <div className="glass-card mt-4 rounded-[26px] border-orange-600/[0.18] bg-gradient-to-br from-orange-500/[0.05] via-white/75 to-white/65 p-5 dark:border-orange-400/[0.16] dark:from-orange-500/[0.07] dark:via-neutral-900/60 dark:to-neutral-900/55">
+      <div className="glass-card flex flex-col justify-between rounded-[26px] border-orange-600/[0.18] bg-gradient-to-br from-orange-500/[0.05] via-white/75 to-white/65 p-5 dark:border-orange-400/[0.16] dark:from-orange-500/[0.07] dark:via-neutral-900/60 dark:to-neutral-900/55">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-[15px] bg-orange-500/[0.12] text-orange-700 border border-orange-600/20 dark:bg-orange-400/15 dark:text-orange-300 dark:border-orange-400/20">
             <SunMoon className="h-5 w-5" />
@@ -245,7 +246,7 @@ export function UnlimitedHub({
       </div>
 
       {/* Mini Sudoku Unlimited Card — Calm Emerald/Mint Tinted Glass */}
-      <div className="glass-card mt-4 rounded-[26px] border-emerald-600/[0.18] bg-gradient-to-br from-emerald-500/[0.05] via-white/75 to-white/65 p-5 dark:border-emerald-400/[0.16] dark:from-emerald-500/[0.07] dark:via-neutral-900/60 dark:to-neutral-900/55">
+      <div className="glass-card flex flex-col justify-between rounded-[26px] border-emerald-600/[0.18] bg-gradient-to-br from-emerald-500/[0.05] via-white/75 to-white/65 p-5 dark:border-emerald-400/[0.16] dark:from-emerald-500/[0.07] dark:via-neutral-900/60 dark:to-neutral-900/55">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-[15px] bg-emerald-500/[0.12] text-emerald-700 border border-emerald-600/20 dark:bg-emerald-400/15 dark:text-emerald-300 dark:border-emerald-400/20">
             <Grid3X3 className="h-5 w-5" />
@@ -310,7 +311,7 @@ export function UnlimitedHub({
       </div>
 
       {/* Patches Unlimited Card — Calm Soft Rose / Berry Tinted Glass */}
-      <div className="glass-card mt-4 rounded-[26px] border-rose-600/[0.18] bg-gradient-to-br from-rose-500/[0.05] via-white/75 to-white/65 p-5 dark:border-rose-400/[0.16] dark:from-rose-500/[0.07] dark:via-neutral-900/60 dark:to-neutral-900/55">
+      <div className="glass-card flex flex-col justify-between rounded-[26px] border-rose-600/[0.18] bg-gradient-to-br from-rose-500/[0.05] via-white/75 to-white/65 p-5 dark:border-rose-400/[0.16] dark:from-rose-500/[0.07] dark:via-neutral-900/60 dark:to-neutral-900/55">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-[15px] bg-rose-500/[0.12] text-rose-700 border border-rose-600/20 dark:bg-rose-400/15 dark:text-rose-300 dark:border-rose-400/20">
             <LayoutGrid className="h-5 w-5" />
@@ -375,7 +376,7 @@ export function UnlimitedHub({
       </div>
 
       {/* Fold Unlimited Card — Calm Soft Lavender / Periwinkle Tinted Glass */}
-      <div className="glass-card mt-4 rounded-[26px] border-indigo-600/[0.18] bg-gradient-to-br from-indigo-500/[0.06] via-white/75 to-violet-500/[0.04] p-5 dark:border-indigo-400/[0.16] dark:from-indigo-500/[0.08] dark:via-neutral-900/60 dark:to-violet-500/[0.06]">
+      <div className="glass-card flex flex-col justify-between rounded-[26px] border-indigo-600/[0.18] bg-gradient-to-br from-indigo-500/[0.06] via-white/75 to-violet-500/[0.04] p-5 dark:border-indigo-400/[0.16] dark:from-indigo-500/[0.08] dark:via-neutral-900/60 dark:to-violet-500/[0.06]">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-[15px] bg-indigo-500/[0.12] text-indigo-700 border border-indigo-600/20 dark:bg-indigo-400/15 dark:text-indigo-300 dark:border-indigo-400/20">
             <Layers className="h-5 w-5" />
@@ -437,6 +438,7 @@ export function UnlimitedHub({
           <Play className="h-4 w-4 fill-current" />
           {t.unlimited.startGame}
         </motion.button>
+      </div>
       </div>
     </div>
   );

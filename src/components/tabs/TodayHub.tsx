@@ -266,7 +266,7 @@ export function TodayHub({
     t.unlimited.foldDifficulties[todayFoldDifficulty].label;
 
   return (
-    <div className="px-5 pt-3 pb-28">
+    <div className="px-5 pt-3 pb-28 lg:px-6 lg:pb-12">
       {/* Greeting + Date + Streak Pill */}
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -278,7 +278,7 @@ export function TodayHub({
           </h1>
         </div>
 
-        <div className="glass-pill mt-1 flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2">
+        <div className="glass-pill mt-1 flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 lg:hidden">
           <Flame
             className={`h-4 w-4 ${
               stats.currentStreak > 0
@@ -397,8 +397,8 @@ export function TodayHub({
         </span>
       </div>
 
-      {/* Active Daily Games: Queens (Muted Amber) & Zip (Muted Ocean Blue) */}
-      <div className="space-y-3.5">
+      {/* Active Daily Games: 1-col on mobile/tablet, 3×2 grid on desktop (lg+) */}
+      <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-3 lg:gap-4">
         {/* Game #1: Queens */}
         <motion.button
           type="button"
@@ -407,7 +407,7 @@ export function TodayHub({
             feedback.pop();
             onPlayDailyQueens();
           }}
-          className="glass-card group relative flex w-full flex-col gap-4 overflow-hidden rounded-[26px] border-amber-600/[0.18] bg-gradient-to-br from-amber-500/[0.05] via-white/75 to-white/65 p-5 text-left transition-all hover:-translate-y-0.5 hover:border-amber-600/35 hover:shadow-[0_10px_24px_-8px_rgba(180,83,9,0.14)] dark:border-amber-400/[0.16] dark:from-amber-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-amber-400/30"
+          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-amber-600/[0.18] bg-gradient-to-br from-amber-500/[0.05] via-white/75 to-white/65 p-5 text-left transition-all hover:-translate-y-0.5 hover:border-amber-600/35 hover:shadow-[0_10px_24px_-8px_rgba(180,83,9,0.14)] dark:border-amber-400/[0.16] dark:from-amber-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-amber-400/30"
         >
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-amber-500/[0.12] text-amber-700 border border-amber-600/20 shadow-xs dark:bg-amber-400/15 dark:text-amber-300 dark:border-amber-400/20">
@@ -459,7 +459,7 @@ export function TodayHub({
             feedback.pop();
             onPlayDailyZip();
           }}
-          className="glass-card group relative flex w-full flex-col gap-4 overflow-hidden rounded-[26px] border-sky-600/[0.18] bg-gradient-to-br from-sky-500/[0.05] via-white/75 to-white/65 p-5 text-left transition-all hover:-translate-y-0.5 hover:border-sky-600/35 hover:shadow-[0_10px_24px_-8px_rgba(3,105,161,0.14)] dark:border-sky-400/[0.16] dark:from-sky-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-sky-400/30"
+          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-sky-600/[0.18] bg-gradient-to-br from-sky-500/[0.05] via-white/75 to-white/65 p-5 text-left transition-all hover:-translate-y-0.5 hover:border-sky-600/35 hover:shadow-[0_10px_24px_-8px_rgba(3,105,161,0.14)] dark:border-sky-400/[0.16] dark:from-sky-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-sky-400/30"
         >
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-sky-500/[0.12] text-sky-700 border border-sky-600/20 shadow-xs dark:bg-sky-400/15 dark:text-sky-300 dark:border-sky-400/20">
@@ -511,7 +511,7 @@ export function TodayHub({
             feedback.pop();
             onPlayDailyTango();
           }}
-          className="glass-card group relative flex w-full flex-col gap-4 overflow-hidden rounded-[26px] border-orange-600/[0.18] bg-gradient-to-br from-orange-500/[0.05] via-white/75 to-white/65 p-5 text-left transition-all hover:-translate-y-0.5 hover:border-orange-600/35 hover:shadow-[0_10px_24px_-8px_rgba(234,88,12,0.14)] dark:border-orange-400/[0.16] dark:from-orange-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-orange-400/30"
+          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-orange-600/[0.18] bg-gradient-to-br from-orange-500/[0.05] via-white/75 to-white/65 p-5 text-left transition-all hover:-translate-y-0.5 hover:border-orange-600/35 hover:shadow-[0_10px_24px_-8px_rgba(234,88,12,0.14)] dark:border-orange-400/[0.16] dark:from-orange-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-orange-400/30"
         >
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-orange-500/[0.12] text-orange-700 border border-orange-600/20 shadow-xs dark:bg-orange-400/15 dark:text-orange-300 dark:border-orange-400/20">
@@ -563,7 +563,7 @@ export function TodayHub({
             feedback.pop();
             onPlayDailyMiniSudoku();
           }}
-          className="glass-card group relative flex w-full flex-col gap-4 overflow-hidden rounded-[26px] border-emerald-600/[0.18] bg-gradient-to-br from-emerald-500/[0.05] via-white/75 to-white/65 p-5 text-left transition-all hover:-translate-y-0.5 hover:border-emerald-600/35 hover:shadow-[0_10px_24px_-8px_rgba(5,150,105,0.14)] dark:border-emerald-400/[0.16] dark:from-emerald-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-emerald-400/30"
+          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-emerald-600/[0.18] bg-gradient-to-br from-emerald-500/[0.05] via-white/75 to-white/65 p-5 text-left transition-all hover:-translate-y-0.5 hover:border-emerald-600/35 hover:shadow-[0_10px_24px_-8px_rgba(5,150,105,0.14)] dark:border-emerald-400/[0.16] dark:from-emerald-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-emerald-400/30"
         >
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-emerald-500/[0.12] text-emerald-700 border border-emerald-600/20 shadow-xs dark:bg-emerald-400/15 dark:text-emerald-300 dark:border-emerald-400/20">
@@ -615,7 +615,7 @@ export function TodayHub({
             feedback.pop();
             onPlayDailyPatches();
           }}
-          className="glass-card group relative flex w-full flex-col gap-4 overflow-hidden rounded-[26px] border-rose-600/[0.18] bg-gradient-to-br from-rose-500/[0.05] via-white/75 to-white/65 p-5 text-left transition-all hover:-translate-y-0.5 hover:border-rose-600/35 hover:shadow-[0_10px_24px_-8px_rgba(225,29,72,0.14)] dark:border-rose-400/[0.16] dark:from-rose-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-rose-400/30"
+          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-rose-600/[0.18] bg-gradient-to-br from-rose-500/[0.05] via-white/75 to-white/65 p-5 text-left transition-all hover:-translate-y-0.5 hover:border-rose-600/35 hover:shadow-[0_10px_24px_-8px_rgba(225,29,72,0.14)] dark:border-rose-400/[0.16] dark:from-rose-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-rose-400/30"
         >
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-rose-500/[0.12] text-rose-700 border border-rose-600/20 shadow-xs dark:bg-rose-400/15 dark:text-rose-300 dark:border-rose-400/20">
@@ -667,7 +667,7 @@ export function TodayHub({
             feedback.pop();
             onPlayDailyFold();
           }}
-          className="glass-card group relative flex w-full flex-col gap-4 overflow-hidden rounded-[26px] border-indigo-600/[0.18] bg-gradient-to-br from-indigo-500/[0.06] via-white/75 to-violet-500/[0.04] p-5 text-left transition-all hover:-translate-y-0.5 hover:border-indigo-600/35 hover:shadow-[0_10px_24px_-8px_rgba(79,70,229,0.14)] dark:border-indigo-400/[0.16] dark:from-indigo-500/[0.09] dark:via-neutral-900/60 dark:to-violet-500/[0.07] dark:hover:border-indigo-400/30"
+          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-indigo-600/[0.18] bg-gradient-to-br from-indigo-500/[0.06] via-white/75 to-violet-500/[0.04] p-5 text-left transition-all hover:-translate-y-0.5 hover:border-indigo-600/35 hover:shadow-[0_10px_24px_-8px_rgba(79,70,229,0.14)] dark:border-indigo-400/[0.16] dark:from-indigo-500/[0.09] dark:via-neutral-900/60 dark:to-violet-500/[0.07] dark:hover:border-indigo-400/30"
         >
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-indigo-500/[0.12] text-indigo-700 border border-indigo-600/20 shadow-xs dark:bg-indigo-400/15 dark:text-indigo-300 dark:border-indigo-400/20">

@@ -287,11 +287,32 @@ export function ZipGame({
     [hasWon]
   );
 
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     if (board.history.length === 0 || hasWon) return;
     feedback.erase();
     setBoard((prev) => undoZipMove(prev));
-  };
+  }, [board.history.length, hasWon]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (hasWon || showRules || isReviewMode) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key === "z" || e.key === "Z") {
+        e.preventDefault();
+        handleUndo();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [hasWon, showRules, isReviewMode, handleUndo]);
 
   const handleReset = () => {
     if (hasWon || board.path.length <= 1) return;
