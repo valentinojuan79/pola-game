@@ -78,7 +78,7 @@ interface ZipGameProps {
     boardSnapshot?: unknown;
   }) => void;
   onExit: () => void;
-  onPlayUnlimitedNext: () => void;
+  onPlayUnlimitedNext: (difficulty?: ZipPuzzle["difficulty"]) => void;
   onOpenAuth: () => void;
 }
 

@@ -28,6 +28,13 @@ import type {
 } from "@/lib/shareCardRenderer";
 import { VisualShareModal } from "@/components/VisualShareModal";
 
+const DIFFICULTY_OPTIONS: ShareDifficulty[] = [
+  "easy",
+  "medium",
+  "hard",
+  "expert",
+];
+
 interface WinModalProps {
   open: boolean;
   game?: PolaGameType;
@@ -42,7 +49,7 @@ interface WinModalProps {
   user: PolaUser | null;
   shareText: string;
   onClaimUsername: () => void;
-  onPlayUnlimited: () => void;
+  onPlayUnlimited: (difficulty?: ShareDifficulty) => void;
   onBackHome: () => void;
 }
 
@@ -66,12 +73,61 @@ export function WinModal({
   const { locale, t } = useI18n();
   const { theme } = useTheme();
   const [shareOpen, setShareOpen] = useState(false);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<ShareDifficulty>(
+    difficulty ?? "easy"
+  );
 
   useEffect(() => {
     if (!open) {
       setShareOpen(false);
+    } else {
+      setSelectedDifficulty(difficulty ?? "easy");
     }
-  }, [open]);
+  }, [open, difficulty]);
+
+  const difficultyLabels = useMemo(() => {
+    switch (game) {
+      case "zip":
+        return t.unlimited.zipDifficulties;
+      case "tango":
+        return t.unlimited.tangoDifficulties;
+      case "mini-sudoku":
+        return t.unlimited.miniSudokuDifficulties;
+      case "patches":
+        return t.unlimited.patchesDifficulties;
+      case "fold":
+        return t.unlimited.foldDifficulties;
+      case "queens":
+      default:
+        return t.unlimited.difficulties;
+    }
+  }, [game, t]);
+
+  const accentSolidButtonClass =
+    game === "zip"
+      ? "bg-[#0369A1] text-white shadow-[0_4px_14px_-4px_rgba(3,105,161,0.3)] hover:bg-[#075985] dark:bg-sky-400/90 dark:text-neutral-950 dark:hover:bg-sky-300"
+      : game === "tango"
+      ? "bg-[#EA580C] text-white shadow-[0_4px_14px_-4px_rgba(234,88,12,0.3)] hover:bg-[#C2410C] dark:bg-orange-400/90 dark:text-neutral-950 dark:hover:bg-orange-300"
+      : game === "mini-sudoku"
+      ? "bg-[#059669] text-white shadow-[0_4px_14px_-4px_rgba(5,150,105,0.3)] hover:bg-[#047857] dark:bg-emerald-400/90 dark:text-neutral-950 dark:hover:bg-emerald-300"
+      : game === "patches"
+      ? "bg-[#E11D48] text-white shadow-[0_4px_14px_-4px_rgba(225,29,72,0.3)] hover:bg-[#BE123C] dark:bg-rose-400/90 dark:text-neutral-950 dark:hover:bg-rose-300"
+      : game === "fold"
+      ? "bg-[#4F46E5] text-white shadow-[0_4px_14px_-4px_rgba(79,70,229,0.3)] hover:bg-[#4338CA] dark:bg-indigo-400/90 dark:text-neutral-950 dark:hover:bg-indigo-300"
+      : "bg-[#D97706] text-white shadow-[0_4px_14px_-4px_rgba(180,83,9,0.3)] hover:bg-[#B45309] dark:bg-amber-500/90 dark:text-neutral-950 dark:hover:bg-amber-400";
+
+  const activePillClass =
+    game === "zip"
+      ? "border-sky-500/35 bg-sky-500/18 text-sky-900 shadow-xs dark:border-sky-400/35 dark:bg-sky-400/20 dark:text-sky-200"
+      : game === "tango"
+      ? "border-orange-500/35 bg-orange-500/18 text-orange-900 shadow-xs dark:border-orange-400/35 dark:bg-orange-400/20 dark:text-orange-200"
+      : game === "mini-sudoku"
+      ? "border-emerald-500/35 bg-emerald-500/18 text-emerald-900 shadow-xs dark:border-emerald-400/35 dark:bg-emerald-400/20 dark:text-emerald-200"
+      : game === "patches"
+      ? "border-rose-500/35 bg-rose-500/18 text-rose-900 shadow-xs dark:border-rose-400/35 dark:bg-rose-400/20 dark:text-rose-200"
+      : game === "fold"
+      ? "border-indigo-500/35 bg-indigo-500/18 text-indigo-900 shadow-xs dark:border-indigo-400/35 dark:bg-indigo-400/20 dark:text-indigo-200"
+      : "border-amber-500/35 bg-amber-500/18 text-amber-950 shadow-xs dark:border-amber-400/35 dark:bg-amber-400/20 dark:text-amber-200";
 
   const sharePayload = useMemo<SingleGameSharePayload>(
     () => ({
@@ -278,24 +334,48 @@ export function WinModal({
               </div>
             )}
 
-            {/* Primary Actions */}
+            {/* Compact Difficulty Selector Pill Bar (Unlimited mode only) */}
+            {mode === "unlimited" && (
+              <div
+                role="radiogroup"
+                aria-label={t.unlimited.selectDifficulty}
+                className="mt-4 grid grid-cols-4 gap-1 rounded-2xl border border-black/[0.06] bg-black/[0.04] p-1 dark:border-white/[0.08] dark:bg-white/[0.05]"
+              >
+                {DIFFICULTY_OPTIONS.map((diff) => {
+                  const active = selectedDifficulty === diff;
+                  return (
+                    <button
+                      key={diff}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => {
+                        feedback.click();
+                        setSelectedDifficulty(diff);
+                      }}
+                      className={`rounded-xl border py-1.5 text-[11.5px] font-semibold transition-all active:scale-[0.97] ${
+                        active
+                          ? activePillClass
+                          : "border-transparent text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+                      }`}
+                    >
+                      {difficultyLabels[diff].label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Primary Actions (exact same vertical slot order across daily & unlimited) */}
             <div className="mt-5 space-y-2.5">
               <button
                 type="button"
                 onClick={handleShare}
-                className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[14px] font-semibold text-white transition-all active:scale-[0.98] dark:text-neutral-950 ${
-                  game === "zip"
-                    ? "bg-[#0369A1] shadow-[0_4px_14px_-4px_rgba(3,105,161,0.3)] hover:bg-[#075985] dark:bg-sky-400/90 dark:hover:bg-sky-300"
-                    : game === "tango"
-                    ? "bg-[#EA580C] shadow-[0_4px_14px_-4px_rgba(234,88,12,0.3)] hover:bg-[#C2410C] dark:bg-orange-400/90 dark:hover:bg-orange-300"
-                    : game === "mini-sudoku"
-                    ? "bg-[#059669] shadow-[0_4px_14px_-4px_rgba(5,150,105,0.3)] hover:bg-[#047857] dark:bg-emerald-400/90 dark:hover:bg-emerald-300"
-                    : game === "patches"
-                    ? "bg-[#E11D48] shadow-[0_4px_14px_-4px_rgba(225,29,72,0.3)] hover:bg-[#BE123C] dark:bg-rose-400/90 dark:hover:bg-rose-300"
-                    : game === "fold"
-                    ? "bg-[#4F46E5] shadow-[0_4px_14px_-4px_rgba(79,70,229,0.3)] hover:bg-[#4338CA] dark:bg-indigo-400/90 dark:hover:bg-indigo-300"
-                    : "bg-[#D97706] shadow-[0_4px_14px_-4px_rgba(180,83,9,0.3)] hover:bg-[#B45309] dark:bg-amber-500/90 dark:hover:bg-amber-400"
-                }`}
+                className={
+                  mode === "daily"
+                    ? `flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[14px] font-semibold transition-all active:scale-[0.98] ${accentSolidButtonClass}`
+                    : "flex w-full items-center justify-center gap-2 rounded-2xl border border-black/[0.08] bg-black/[0.035] py-3 text-[14px] font-semibold text-neutral-800 transition-all hover:bg-black/[0.06] active:scale-[0.98] dark:border-white/[0.12] dark:bg-white/[0.06] dark:text-neutral-100 dark:hover:bg-white/[0.1]"
+                }
               >
                 <Share2 className="h-4 w-4" />
                 {t.win.shareResult}
@@ -305,9 +385,15 @@ export function WinModal({
                 type="button"
                 onClick={() => {
                   feedback.pop();
-                  onPlayUnlimited();
+                  onPlayUnlimited(
+                    mode === "unlimited" ? selectedDifficulty : undefined
+                  );
                 }}
-                className="glass-card flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-[14px] font-semibold text-neutral-900 transition-transform active:scale-[0.98] dark:text-white"
+                className={
+                  mode === "daily"
+                    ? "glass-card flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-[14px] font-semibold text-neutral-900 transition-transform active:scale-[0.98] dark:text-white"
+                    : `flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[14px] font-semibold transition-all active:scale-[0.98] ${accentSolidButtonClass}`
+                }
               >
                 <InfinityIcon className="h-4 w-4" />
                 {mode === "daily" ? t.win.playUnlimited : t.win.nextPuzzle}

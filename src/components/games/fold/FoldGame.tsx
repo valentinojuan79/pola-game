@@ -104,7 +104,7 @@ interface FoldGameProps {
     boardSnapshot?: unknown;
   }) => void;
   onExit: () => void;
-  onPlayUnlimitedNext: () => void;
+  onPlayUnlimitedNext: (difficulty?: FoldPuzzle["difficulty"]) => void;
   onOpenAuth: () => void;
 }
 

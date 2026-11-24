@@ -93,7 +93,7 @@ interface QueensGameProps {
     boardSnapshot?: unknown;
   }) => void;
   onExit: () => void;
-  onPlayUnlimitedNext: () => void;
+  onPlayUnlimitedNext: (difficulty?: QueensPuzzle["difficulty"]) => void;
   onOpenAuth: () => void;
 }
 

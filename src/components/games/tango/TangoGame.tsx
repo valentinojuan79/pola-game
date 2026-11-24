@@ -90,7 +90,7 @@ interface TangoGameProps {
     boardSnapshot?: unknown;
   }) => void;
   onExit: () => void;
-  onPlayUnlimitedNext: () => void;
+  onPlayUnlimitedNext: (difficulty?: TangoPuzzle["difficulty"]) => void;
   onOpenAuth: () => void;
 }
 

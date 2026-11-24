@@ -427,8 +427,10 @@ export default function PolaAppPage() {
             reviewCompletion={activeGame.reviewCompletion ?? null}
             onComplete={handleGameComplete}
             onExit={() => setActiveGame(null)}
-            onPlayUnlimitedNext={() =>
-              handlePlayUnlimitedQueens(activeGame.puzzle.difficulty)
+            onPlayUnlimitedNext={(nextDifficulty) =>
+              handlePlayUnlimitedQueens(
+                nextDifficulty ?? activeGame.puzzle.difficulty
+              )
             }
             onOpenAuth={() => setAuthOpen(true)}
           />
@@ -444,8 +446,10 @@ export default function PolaAppPage() {
             reviewCompletion={activeGame.reviewCompletion ?? null}
             onComplete={handleGameComplete}
             onExit={() => setActiveGame(null)}
-            onPlayUnlimitedNext={() =>
-              handlePlayUnlimitedZip(activeGame.puzzle.difficulty)
+            onPlayUnlimitedNext={(nextDifficulty) =>
+              handlePlayUnlimitedZip(
+                nextDifficulty ?? activeGame.puzzle.difficulty
+              )
             }
             onOpenAuth={() => setAuthOpen(true)}
           />
@@ -461,8 +465,10 @@ export default function PolaAppPage() {
             reviewCompletion={activeGame.reviewCompletion ?? null}
             onComplete={handleGameComplete}
             onExit={() => setActiveGame(null)}
-            onPlayUnlimitedNext={() =>
-              handlePlayUnlimitedTango(activeGame.puzzle.difficulty)
+            onPlayUnlimitedNext={(nextDifficulty) =>
+              handlePlayUnlimitedTango(
+                nextDifficulty ?? activeGame.puzzle.difficulty
+              )
             }
             onOpenAuth={() => setAuthOpen(true)}
           />
@@ -478,8 +484,10 @@ export default function PolaAppPage() {
             reviewCompletion={activeGame.reviewCompletion ?? null}
             onComplete={handleGameComplete}
             onExit={() => setActiveGame(null)}
-            onPlayUnlimitedNext={() =>
-              handlePlayUnlimitedMiniSudoku(activeGame.puzzle.difficulty)
+            onPlayUnlimitedNext={(nextDifficulty) =>
+              handlePlayUnlimitedMiniSudoku(
+                nextDifficulty ?? activeGame.puzzle.difficulty
+              )
             }
             onOpenAuth={() => setAuthOpen(true)}
           />
@@ -495,8 +503,10 @@ export default function PolaAppPage() {
             reviewCompletion={activeGame.reviewCompletion ?? null}
             onComplete={handleGameComplete}
             onExit={() => setActiveGame(null)}
-            onPlayUnlimitedNext={() =>
-              handlePlayUnlimitedPatches(activeGame.puzzle.difficulty)
+            onPlayUnlimitedNext={(nextDifficulty) =>
+              handlePlayUnlimitedPatches(
+                nextDifficulty ?? activeGame.puzzle.difficulty
+              )
             }
             onOpenAuth={() => setAuthOpen(true)}
           />
@@ -512,8 +522,10 @@ export default function PolaAppPage() {
             reviewCompletion={activeGame.reviewCompletion ?? null}
             onComplete={handleGameComplete}
             onExit={() => setActiveGame(null)}
-            onPlayUnlimitedNext={() =>
-              handlePlayUnlimitedFold(activeGame.puzzle.difficulty)
+            onPlayUnlimitedNext={(nextDifficulty) =>
+              handlePlayUnlimitedFold(
+                nextDifficulty ?? activeGame.puzzle.difficulty
+              )
             }
             onOpenAuth={() => setAuthOpen(true)}
           />

@@ -91,7 +91,7 @@ interface PatchesGameProps {
     boardSnapshot?: unknown;
   }) => void;
   onExit: () => void;
-  onPlayUnlimitedNext: () => void;
+  onPlayUnlimitedNext: (difficulty?: PatchesPuzzle["difficulty"]) => void;
   onOpenAuth: () => void;
 }
 

@@ -102,7 +102,7 @@ interface MiniSudokuGameProps {
     boardSnapshot?: unknown;
   }) => void;
   onExit: () => void;
-  onPlayUnlimitedNext: () => void;
+  onPlayUnlimitedNext: (difficulty?: MiniSudokuPuzzle["difficulty"]) => void;
   onOpenAuth: () => void;
 }
 

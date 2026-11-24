@@ -1,4 +1,4 @@
-import { buildTransformedTangoPreset } from "./presetBank";
+import { generateTangoPuzzle } from "./generator";
 import type { TangoDifficulty, TangoPuzzle } from "./types";
 
 /**
@@ -38,24 +38,26 @@ export function getTangoDifficultyForDateString(
 const dailyTangoCache = new Map<string, TangoPuzzle>();
 
 /**
- * Get Today's Daily Tango puzzle for a given YYYY-MM-DD date in 0ms.
+ * Get Today's Daily Tango puzzle for a given YYYY-MM-DD date.
+ * Guaranteed 100% purely logical (no trial-and-error / look-ahead guessing).
  */
 export function getDailyTangoPuzzle(dateStr: string): TangoPuzzle {
   const cached = dailyTangoCache.get(dateStr);
   if (cached) return cached;
 
   const difficulty = getTangoDifficultyForDateString(dateStr);
-  const puzzle = buildTransformedTangoPreset(difficulty, `daily-${dateStr}`);
+  const puzzle = generateTangoPuzzle(difficulty, `daily-${dateStr}`);
   dailyTangoCache.set(dateStr, puzzle);
   return puzzle;
 }
 
 /**
- * Get an Unlimited Tango puzzle for any chosen difficulty in 0ms.
+ * Get an Unlimited Tango puzzle for any chosen difficulty with randomized
+ * board symmetries and clue-removal order.
  */
 export function getUnlimitedTangoPuzzle(
   difficulty: TangoDifficulty,
   nonce: string
 ): TangoPuzzle {
-  return buildTransformedTangoPreset(difficulty, `unlimited-${nonce}`);
+  return generateTangoPuzzle(difficulty, `unlimited-${nonce}`);
 }
