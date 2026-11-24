@@ -178,7 +178,7 @@ export function ZipBoard({
       : "h-[62%] w-[62%] text-[15px]";
 
   return (
-    <div className="glass-card w-full rounded-[26px] p-2.5">
+    <div className="glass-card w-full max-w-[390px] rounded-[26px] p-2.5">
       <div
         ref={boardRef}
         onPointerDown={handlePointerDown}
@@ -189,7 +189,7 @@ export function ZipBoard({
           touchAction: "none",
           overscrollBehavior: "none",
         }}
-        className="relative aspect-square w-full select-none overflow-hidden rounded-[18px] border-[2.5px] border-neutral-900/90 bg-white/85 dark:border-white/70 dark:bg-neutral-900/80"
+        className="relative aspect-square w-full touch-none overscroll-none select-none overflow-hidden rounded-[18px] border-[2.5px] border-neutral-900/90 bg-white/85 dark:border-white/70 dark:bg-neutral-900/80"
       >
         {/* Layer 1: Background Cell Grid */}
         <div

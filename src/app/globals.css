@@ -79,11 +79,11 @@
 }
 
 .safe-pt {
-  padding-top: calc(env(safe-area-inset-top) + 0.75rem);
+  padding-top: calc(env(safe-area-inset-top) + 1rem);
 }
 
 .safe-pb {
-  padding-bottom: max(env(safe-area-inset-bottom), 14px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);
 }
 
 /* Crisp top-bar controls without backdrop-filter (avoids iOS standalone PWA top-bar haze) */

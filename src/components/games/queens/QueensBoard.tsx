@@ -126,7 +126,7 @@ export function QueensBoard({
   const xSize = n >= 9 ? "h-3 w-3" : "h-3.5 w-3.5";
 
   return (
-    <div className="glass-card w-full rounded-[26px] p-2.5">
+    <div className="glass-card w-full max-w-[390px] rounded-[26px] p-2.5">
       <div
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -138,7 +138,7 @@ export function QueensBoard({
           touchAction: "none",
           overscrollBehavior: "none",
         }}
-        className="grid aspect-square w-full select-none overflow-hidden rounded-[18px] border-[2.5px] border-neutral-900 dark:border-white/75"
+        className="grid aspect-square w-full touch-none overscroll-none select-none overflow-hidden rounded-[18px] border-[2.5px] border-neutral-900 dark:border-white/75"
       >
         {puzzle.regions.map((rowRegions, r) =>
           rowRegions.map((reg, c) => {

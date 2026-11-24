@@ -30,10 +30,6 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Pola",
   },
-  icons: {
-    icon: "/icons/icon.svg",
-    apple: "/icons/icon.svg",
-  },
 };
 
 export const viewport: Viewport = {
@@ -70,26 +66,32 @@ export default function RootLayout({
           content="black-translucent"
         />
       </head>
-      <body className="font-sans relative min-h-[100dvh] bg-[#F4F6FA] text-neutral-900 antialiased selection:bg-sky-500/20 dark:bg-[#090B10] dark:text-neutral-100">
-        {/* Ambient blurred iOS Liquid Glass refraction orbs (fixed behind layout) */}
+      <body className="font-sans relative min-h-dvh bg-[#F4F6FA] text-neutral-900 antialiased selection:bg-sky-500/20 dark:bg-[#090B10] dark:text-neutral-100">
+        {/* Ambient radial glow backdrop (pure gradients, zero CSS filter/blur to prevent WebKit top-bar 1x rasterization) */}
         <div
           aria-hidden="true"
           className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
         >
-          {/* Top-left soft sky orb */}
-          <div className="absolute -top-24 -left-20 h-[360px] w-[360px] rounded-full bg-sky-300/35 blur-[92px] dark:bg-sky-500/18" />
-          {/* Top-right soft warm amber orb */}
-          <div className="absolute top-[14%] -right-24 h-[330px] w-[330px] rounded-full bg-amber-200/40 blur-[94px] dark:bg-amber-500/12" />
-          {/* Mid-left soft mint orb */}
-          <div className="absolute top-[52%] -left-24 h-[310px] w-[310px] rounded-full bg-emerald-200/35 blur-[96px] dark:bg-emerald-500/14" />
-          {/* Lower-right soft rose orb */}
-          <div className="absolute -bottom-16 right-[4%] h-[300px] w-[300px] rounded-full bg-rose-200/35 blur-[94px] dark:bg-cyan-600/14" />
+          <div
+            className="absolute inset-0 dark:hidden"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 10% 6%, rgba(125, 211, 252, 0.28) 0%, transparent 44%), radial-gradient(circle at 92% 22%, rgba(253, 230, 138, 0.30) 0%, transparent 42%), radial-gradient(circle at 8% 62%, rgba(167, 243, 208, 0.28) 0%, transparent 42%), radial-gradient(circle at 88% 92%, rgba(254, 205, 211, 0.28) 0%, transparent 42%)",
+            }}
+          />
+          <div
+            className="absolute inset-0 hidden dark:block"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 10% 6%, rgba(14, 165, 233, 0.14) 0%, transparent 44%), radial-gradient(circle at 92% 22%, rgba(245, 158, 11, 0.10) 0%, transparent 42%), radial-gradient(circle at 8% 62%, rgba(16, 185, 129, 0.11) 0%, transparent 42%), radial-gradient(circle at 88% 92%, rgba(8, 145, 178, 0.12) 0%, transparent 42%)",
+            }}
+          />
         </div>
 
         <ThemeProvider>
           <I18nProvider>
-            {/* Mobile-first centered shell on desktop */}
-            <div className="relative mx-auto min-h-[100dvh] w-full max-w-[430px] font-sans md:border-x md:border-black/[0.06] md:dark:border-white/[0.08]">
+            {/* Mobile-first centered shell on tablets and desktop */}
+            <div className="relative mx-auto min-h-dvh w-full max-w-[440px] font-sans md:border-x md:border-black/[0.06] md:dark:border-white/[0.08]">
               {children}
             </div>
           </I18nProvider>

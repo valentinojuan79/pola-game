@@ -263,7 +263,7 @@ export function PatchesBoard({
         onPointerUp={finishDrag}
         onPointerCancel={finishDrag}
         style={{ touchAction: "none", overscrollBehavior: "none" }}
-        className="relative aspect-square w-full select-none overflow-hidden rounded-xl border border-black/[0.08] bg-white/85 dark:border-white/[0.10] dark:bg-neutral-950/60"
+        className="relative aspect-square w-full touch-none overscroll-none select-none overflow-hidden rounded-xl border border-black/[0.08] bg-white/85 dark:border-white/[0.10] dark:bg-neutral-950/60"
       >
         {/* Layer 1: Static equal-sized grid cells (zero resizing) */}
         <div

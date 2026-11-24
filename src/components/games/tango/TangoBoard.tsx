@@ -139,7 +139,7 @@ export function TangoBoard({
 
   return (
     <div
-      className="glass-card relative w-full max-w-[376px] select-none rounded-2xl p-2.5"
+      className="glass-card relative w-full max-w-[376px] touch-none overscroll-none select-none rounded-2xl p-2.5"
       style={{ touchAction: "none", overscrollBehavior: "none" }}
     >
       {/* Inner strict 6x6 coordinate frame */}

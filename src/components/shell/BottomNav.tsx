@@ -29,7 +29,7 @@ export function BottomNav({ activeTab, onSelectTab }: BottomNavProps) {
       exit={{ y: 32, opacity: 0 }}
       transition={{ type: "spring", stiffness: 420, damping: 32 }}
       aria-label="Primary Navigation"
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-[430px] justify-center px-5 safe-pb"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 mx-auto flex w-full max-w-[440px] justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
     >
       <div className="glass-pill pointer-events-auto flex w-full max-w-[312px] items-center justify-between rounded-full p-1.5">
         {items.map((item) => {

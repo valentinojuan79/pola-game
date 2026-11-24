@@ -413,7 +413,7 @@ export default function PolaAppPage() {
   }, []);
 
   return (
-    <main className="relative min-h-[100dvh] w-full">
+    <main className="relative min-h-dvh w-full">
       <AnimatePresence mode="wait">
         {activeGame?.game === "queens" ? (
           <QueensGame
@@ -518,7 +518,7 @@ export default function PolaAppPage() {
             onOpenAuth={() => setAuthOpen(true)}
           />
         ) : (
-          <div key="hub-shell" className="flex min-h-[100dvh] flex-col">
+          <div key="hub-shell" className="flex min-h-dvh flex-col">
             <HeaderBar />
 
             <div className="flex-1">

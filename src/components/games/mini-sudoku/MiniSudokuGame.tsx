@@ -502,25 +502,25 @@ export function MiniSudokuGame({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.18 }}
-      className="flex min-h-[100dvh] flex-col justify-between px-4 pb-6 safe-pb"
+      className="flex min-h-dvh flex-col justify-between px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
     >
       {/* Dead-center 3-column Game Navigation Bar */}
-      <div className="relative z-10 grid grid-cols-[84px_1fr_84px] items-center pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-2">
+      <div className="relative z-10 grid h-auto grid-cols-[72px_1fr_72px] sm:grid-cols-[84px_1fr_84px] items-center gap-1 pt-[calc(env(safe-area-inset-top)+1rem)] pb-3">
         <button
           type="button"
           onClick={() => {
             feedback.click();
             onExit();
           }}
-          className="header-btn justify-self-start flex h-9 items-center gap-1 rounded-full pr-3.5 pl-2.5 text-[13px] font-medium text-neutral-800 transition-colors dark:text-neutral-200"
+          className="header-btn justify-self-start flex h-9 items-center gap-1 rounded-full pr-3 pl-2 sm:pr-3.5 sm:pl-2.5 text-[13px] font-medium text-neutral-800 transition-colors dark:text-neutral-200"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4 shrink-0" />
           {t.miniSudoku.back}
         </button>
 
         {/* Center Title + Timer */}
-        <div className="flex flex-col items-center justify-self-center text-center">
-          <span className="whitespace-nowrap text-[13px] font-semibold tracking-normal text-slate-600 dark:text-slate-300">
+        <div className="flex min-w-0 flex-col items-center justify-self-center text-center">
+          <span className="max-w-full truncate whitespace-nowrap text-[12px] sm:text-[13px] font-semibold tracking-normal text-slate-600 dark:text-slate-300">
             {mode === "daily"
               ? t.miniSudoku.dailyLabel
               : t.miniSudoku.unlimitedLabel}{" "}
@@ -686,7 +686,7 @@ export function MiniSudokuGame({
           </div>
 
           {/* 5 Action Controls: Notes, Erase, Undo, Hint, Reset */}
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
             <button
               type="button"
               onClick={() => {
@@ -695,44 +695,44 @@ export function MiniSudokuGame({
               }}
               disabled={hasWon}
               aria-pressed={notesMode}
-              className={`glass-card flex flex-col items-center justify-center gap-1 rounded-[18px] py-2.5 text-[10.5px] font-medium transition-all active:scale-95 disabled:opacity-40 ${
+              className={`glass-card flex flex-col items-center justify-center gap-1 rounded-[18px] py-2.5 text-[10px] sm:text-[10.5px] font-medium transition-all active:scale-95 disabled:opacity-40 ${
                 notesMode
                   ? "border-emerald-500/45 bg-emerald-500/[0.16] text-emerald-900 dark:border-emerald-400/45 dark:bg-emerald-400/[0.18] dark:text-emerald-100"
                   : "text-neutral-800 dark:text-neutral-200"
               }`}
             >
               <Pencil className="h-[17px] w-[17px]" />
-              <span>{t.miniSudoku.notes}</span>
+              <span className="whitespace-nowrap">{t.miniSudoku.notes}</span>
             </button>
 
             <button
               type="button"
               onClick={handleErase}
               disabled={hasWon || !selectedCell || selectedIsLocked}
-              className="glass-card flex flex-col items-center justify-center gap-1 rounded-[18px] py-2.5 text-[10.5px] font-medium text-neutral-800 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-200"
+              className="glass-card flex flex-col items-center justify-center gap-1 rounded-[18px] py-2.5 text-[10px] sm:text-[10.5px] font-medium text-neutral-800 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-200"
             >
               <Eraser className="h-[17px] w-[17px]" />
-              <span>{t.miniSudoku.erase}</span>
+              <span className="whitespace-nowrap">{t.miniSudoku.erase}</span>
             </button>
 
             <button
               type="button"
               onClick={handleUndo}
               disabled={board.history.length === 0 || hasWon}
-              className="glass-card flex flex-col items-center justify-center gap-1 rounded-[18px] py-2.5 text-[10.5px] font-medium text-neutral-800 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-200"
+              className="glass-card flex flex-col items-center justify-center gap-1 rounded-[18px] py-2.5 text-[10px] sm:text-[10.5px] font-medium text-neutral-800 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-200"
             >
               <Undo2 className="h-[17px] w-[17px]" />
-              <span>{t.miniSudoku.undo}</span>
+              <span className="whitespace-nowrap">{t.miniSudoku.undo}</span>
             </button>
 
             <button
               type="button"
               onClick={handleHint}
               disabled={hasWon || hintCooldown > 0}
-              className="glass-card relative flex flex-col items-center justify-center gap-1 overflow-hidden rounded-[18px] py-2.5 text-[10.5px] font-medium text-emerald-700 transition-transform active:scale-95 disabled:opacity-50 dark:text-emerald-300"
+              className="glass-card relative flex flex-col items-center justify-center gap-1 overflow-hidden rounded-[18px] py-2.5 text-[10px] sm:text-[10.5px] font-medium text-emerald-700 transition-transform active:scale-95 disabled:opacity-50 dark:text-emerald-300"
             >
               <Lightbulb className="h-[17px] w-[17px]" />
-              <span className="tabular-nums">
+              <span className="whitespace-nowrap tabular-nums">
                 {hintCooldown > 0 ? `${hintCooldown}s` : t.miniSudoku.hint}
               </span>
             </button>
@@ -741,10 +741,10 @@ export function MiniSudokuGame({
               type="button"
               onClick={handleReset}
               disabled={hasWon || !hasAnyProgress}
-              className="glass-card flex flex-col items-center justify-center gap-1 rounded-[18px] py-2.5 text-[10.5px] font-medium text-neutral-700 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-300"
+              className="glass-card flex flex-col items-center justify-center gap-1 rounded-[18px] py-2.5 text-[10px] sm:text-[10.5px] font-medium text-neutral-700 transition-transform active:scale-95 disabled:opacity-40 dark:text-neutral-300"
             >
               <RotateCcw className="h-[17px] w-[17px]" />
-              <span>{t.miniSudoku.reset}</span>
+              <span className="whitespace-nowrap">{t.miniSudoku.reset}</span>
             </button>
           </div>
         </div>

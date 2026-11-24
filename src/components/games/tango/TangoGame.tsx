@@ -375,25 +375,25 @@ export function TangoGame({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.18 }}
-      className="flex min-h-[100dvh] flex-col justify-between px-4 pb-6 safe-pb"
+      className="flex min-h-dvh flex-col justify-between px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
     >
       {/* Top Game Navigation Bar — dead-center 3-column grid */}
-      <div className="relative z-10 grid grid-cols-[84px_1fr_84px] items-center pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-2">
+      <div className="relative z-10 grid h-auto grid-cols-[72px_1fr_72px] sm:grid-cols-[84px_1fr_84px] items-center gap-1 pt-[calc(env(safe-area-inset-top)+1rem)] pb-3">
         <button
           type="button"
           onClick={() => {
             feedback.click();
             onExit();
           }}
-          className="header-btn justify-self-start flex h-9 items-center gap-1 rounded-full pr-3.5 pl-2.5 text-[13px] font-medium text-neutral-800 transition-colors dark:text-neutral-200"
+          className="header-btn justify-self-start flex h-9 items-center gap-1 rounded-full pr-3 pl-2 sm:pr-3.5 sm:pl-2.5 text-[13px] font-medium text-neutral-800 transition-colors dark:text-neutral-200"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4 shrink-0" />
           {t.tango.back}
         </button>
 
         {/* Center Title + Timer */}
-        <div className="flex flex-col items-center justify-self-center text-center">
-          <span className="whitespace-nowrap text-[13px] font-semibold tracking-normal text-slate-600 dark:text-slate-300">
+        <div className="flex min-w-0 flex-col items-center justify-self-center text-center">
+          <span className="max-w-full truncate whitespace-nowrap text-[12px] sm:text-[13px] font-semibold tracking-normal text-slate-600 dark:text-slate-300">
             {mode === "daily" ? t.tango.dailyLabel : t.tango.unlimitedLabel} ·
             6×6
           </span>
@@ -496,15 +496,15 @@ export function TangoGame({
         />
 
         {/* Progress + Native iOS Segmented Control for Visual Mode */}
-        <div className="mt-3.5 flex w-full max-w-[376px] items-center justify-between px-1">
-          <span className="tabular-nums text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
+        <div className="mt-3.5 flex w-full max-w-[376px] items-center justify-between gap-2 px-1">
+          <span className="truncate tabular-nums text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
             {filledCount} / 36 {t.tango.cellsFilled}
           </span>
 
           <div
             role="radiogroup"
             aria-label={t.tango.toggleVisualMode}
-            className="relative inline-grid grid-cols-2 items-center rounded-full border border-black/[0.06] bg-black/[0.045] p-0.5 dark:border-white/[0.08] dark:bg-white/[0.06]"
+            className="relative inline-grid shrink-0 grid-cols-2 items-center rounded-full border border-black/[0.06] bg-black/[0.045] p-0.5 dark:border-white/[0.08] dark:bg-white/[0.06]"
           >
             {(["icons", "circles"] as const).map((option) => {
               const active = visualMode === option;
@@ -515,7 +515,7 @@ export function TangoGame({
                   role="radio"
                   aria-checked={active}
                   onClick={() => handleSelectVisualMode(option)}
-                  className={`relative z-10 flex items-center justify-center gap-1.5 rounded-full px-3 py-1 text-[11.5px] font-semibold transition-colors ${
+                  className={`relative z-10 flex items-center justify-center gap-1.5 rounded-full px-2.5 sm:px-3 py-1 text-[11px] sm:text-[11.5px] font-semibold transition-colors ${
                     active
                       ? "text-neutral-900 dark:text-white"
                       : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"

@@ -361,24 +361,24 @@ export function FoldGame({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.18 }}
-      className="flex min-h-[100dvh] flex-col justify-between px-4 pb-6 safe-pb"
+      className="flex min-h-dvh flex-col justify-between px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
     >
       {/* Top Game Navigation Bar — 3-column symmetric header */}
-      <div className="relative z-10 grid grid-cols-[84px_1fr_84px] items-center pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3">
+      <div className="relative z-10 grid h-auto grid-cols-[72px_1fr_72px] sm:grid-cols-[84px_1fr_84px] items-center gap-1 pt-[calc(env(safe-area-inset-top)+1rem)] pb-3">
         <button
           type="button"
           onClick={() => {
             feedback.click();
             onExit();
           }}
-          className="header-btn justify-self-start flex h-9 items-center gap-1 rounded-full pr-3.5 pl-2.5 text-[13px] font-medium text-neutral-800 transition-colors dark:text-neutral-200"
+          className="header-btn justify-self-start flex h-9 items-center gap-1 rounded-full pr-3 pl-2 sm:pr-3.5 sm:pl-2.5 text-[13px] font-medium text-neutral-800 transition-colors dark:text-neutral-200"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4 shrink-0" />
           {t.fold.back}
         </button>
 
-        <div className="flex flex-col items-center justify-self-center text-center">
-          <span className="whitespace-nowrap text-[13px] font-semibold tracking-normal text-slate-600 dark:text-slate-300">
+        <div className="flex min-w-0 flex-col items-center justify-self-center text-center">
+          <span className="max-w-full truncate whitespace-nowrap text-[12px] sm:text-[13px] font-semibold tracking-normal text-slate-600 dark:text-slate-300">
             {mode === "daily" ? t.fold.dailyLabel : t.fold.unlimitedLabel} ·{" "}
             {puzzle.size}×{puzzle.size}
           </span>
