@@ -473,6 +473,48 @@ export default function PolaAppPage() {
     [todayDateStr, activeGame]
   );
 
+  const handlePlayRandomUnlimited = useCallback(() => {
+    const games: PolaGameType[] = [
+      "queens",
+      "zip",
+      "tango",
+      "mini-sudoku",
+      "patches",
+      "fold",
+    ];
+    const diffs = ["easy", "medium", "hard", "expert"] as const;
+    const pickedGame = games[Math.floor(Math.random() * games.length)];
+    const pickedDiff = diffs[Math.floor(Math.random() * diffs.length)];
+
+    switch (pickedGame) {
+      case "queens":
+        handlePlayUnlimitedQueens(pickedDiff);
+        break;
+      case "zip":
+        handlePlayUnlimitedZip(pickedDiff);
+        break;
+      case "tango":
+        handlePlayUnlimitedTango(pickedDiff);
+        break;
+      case "mini-sudoku":
+        handlePlayUnlimitedMiniSudoku(pickedDiff);
+        break;
+      case "patches":
+        handlePlayUnlimitedPatches(pickedDiff);
+        break;
+      case "fold":
+        handlePlayUnlimitedFold(pickedDiff);
+        break;
+    }
+  }, [
+    handlePlayUnlimitedQueens,
+    handlePlayUnlimitedZip,
+    handlePlayUnlimitedTango,
+    handlePlayUnlimitedMiniSudoku,
+    handlePlayUnlimitedPatches,
+    handlePlayUnlimitedFold,
+  ]);
+
   const handleSignOut = useCallback(async () => {
     await signOutUser();
     clearLocalProgress();
@@ -613,7 +655,9 @@ export default function PolaAppPage() {
               {activeTab === "today" && (
                 <TodayHub
                   stats={stats}
+                  userId={user?.id ?? null}
                   username={user?.displayName ?? null}
+                  syncVersion={syncVersion}
                   todayDateStr={todayDateStr}
                   todayDifficulty={todayDifficulty}
                   todayZipDifficulty={todayZipDifficulty}
@@ -634,6 +678,8 @@ export default function PolaAppPage() {
                   onPlayDailyPatches={handlePlayDailyPatches}
                   onPlayDailyFold={handlePlayDailyFold}
                   onGoToUnlimited={() => setActiveTab("unlimited")}
+                  onGoToRanks={() => setActiveTab("leaderboard")}
+                  onPlayRandomUnlimited={handlePlayRandomUnlimited}
                 />
               )}
 
@@ -659,6 +705,14 @@ export default function PolaAppPage() {
                 />
               )}
             </div>
+
+            {/* Minimal single-line desktop footer (lg+ only) */}
+            <footer className="hidden lg:flex items-center justify-between text-xs opacity-60 mt-10 mx-6 pt-5 pb-6 border-t border-black/[0.08] dark:border-white/[0.1] text-neutral-700 dark:text-neutral-300">
+              <span>Pola — Daily Logic Puzzles</span>
+              <span>
+                Independent portfolio project inspired by LinkedIn Games
+              </span>
+            </footer>
 
             <BottomNav activeTab={activeTab} onSelectTab={setActiveTab} />
           </div>

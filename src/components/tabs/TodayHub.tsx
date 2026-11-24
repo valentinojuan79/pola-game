@@ -3,14 +3,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
+  ArrowRight,
   Clock,
   Crown,
   Flame,
   CheckCircle2,
   ChevronRight,
   Infinity as InfinityIcon,
+  Keyboard,
+  Medal,
   Route,
   Share2,
+  Shuffle,
   Sparkles,
   SunMoon,
   Grid3X3,
@@ -23,6 +27,10 @@ import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { feedback } from "@/lib/feedback";
 import type { DailyCompletion, LocalProfileStats } from "@/lib/storage";
+import {
+  fetchOverallDailyLeaderboard,
+  type LeaderboardEntry,
+} from "@/lib/supabase";
 import type { DailyRecapSharePayload } from "@/lib/shareCardRenderer";
 import { VisualShareModal } from "@/components/VisualShareModal";
 import {
@@ -47,7 +55,9 @@ import { formatTime } from "@/lib/games/queens/engine";
 
 interface TodayHubProps {
   stats: LocalProfileStats;
+  userId?: string | null;
   username?: string | null;
+  syncVersion?: number;
   todayDateStr: string;
   todayDifficulty: QueensDifficulty;
   todayZipDifficulty: ZipDifficulty;
@@ -68,6 +78,8 @@ interface TodayHubProps {
   onPlayDailyPatches: () => void;
   onPlayDailyFold: () => void;
   onGoToUnlimited: () => void;
+  onGoToRanks: () => void;
+  onPlayRandomUnlimited: () => void;
 }
 
 function getCountdownToMidnight(): string {
@@ -95,7 +107,9 @@ function getCountdownToMidnight(): string {
 
 export function TodayHub({
   stats,
+  userId,
   username,
+  syncVersion = 0,
   todayDateStr,
   todayDifficulty,
   todayZipDifficulty,
@@ -116,80 +130,105 @@ export function TodayHub({
   onPlayDailyPatches,
   onPlayDailyFold,
   onGoToUnlimited,
+  onGoToRanks,
+  onPlayRandomUnlimited,
 }: TodayHubProps) {
   const { locale, t } = useI18n();
   const { theme } = useTheme();
   const [midnightCountdown, setMidnightCountdown] = useState<string>("--:--:--");
   const [recapShareOpen, setRecapShareOpen] = useState(false);
+  const [topRanks, setTopRanks] = useState<LeaderboardEntry[]>([]);
+  const [ranksLoading, setRanksLoading] = useState(true);
 
-  const allCleared = Boolean(
-    todayQueensCompletion &&
-      todayZipCompletion &&
-      todayTangoCompletion &&
-      todayMiniSudokuCompletion &&
-      todayPatchesCompletion &&
-      todayFoldCompletion
+  const completedList = useMemo(
+    () =>
+      [
+        todayQueensCompletion
+          ? {
+              game: "queens" as const,
+              completion: todayQueensCompletion,
+              difficulty: todayDifficulty,
+            }
+          : null,
+        todayZipCompletion
+          ? {
+              game: "zip" as const,
+              completion: todayZipCompletion,
+              difficulty: todayZipDifficulty,
+            }
+          : null,
+        todayTangoCompletion
+          ? {
+              game: "tango" as const,
+              completion: todayTangoCompletion,
+              difficulty: todayTangoDifficulty,
+            }
+          : null,
+        todayMiniSudokuCompletion
+          ? {
+              game: "mini-sudoku" as const,
+              completion: todayMiniSudokuCompletion,
+              difficulty: todayMiniSudokuDifficulty,
+            }
+          : null,
+        todayPatchesCompletion
+          ? {
+              game: "patches" as const,
+              completion: todayPatchesCompletion,
+              difficulty: todayPatchesDifficulty,
+            }
+          : null,
+        todayFoldCompletion
+          ? {
+              game: "fold" as const,
+              completion: todayFoldCompletion,
+              difficulty: todayFoldDifficulty,
+            }
+          : null,
+      ].filter(Boolean) as {
+        game: DailyRecapSharePayload["games"][number]["game"];
+        completion: DailyCompletion;
+        difficulty: DailyRecapSharePayload["games"][number]["difficulty"];
+      }[],
+    [
+      todayQueensCompletion,
+      todayZipCompletion,
+      todayTangoCompletion,
+      todayMiniSudokuCompletion,
+      todayPatchesCompletion,
+      todayFoldCompletion,
+      todayDifficulty,
+      todayZipDifficulty,
+      todayTangoDifficulty,
+      todayMiniSudokuDifficulty,
+      todayPatchesDifficulty,
+      todayFoldDifficulty,
+    ]
   );
 
-  const combinedTotalSeconds = allCleared
-    ? (todayQueensCompletion?.totalSeconds ?? 0) +
-      (todayZipCompletion?.totalSeconds ?? 0) +
-      (todayTangoCompletion?.totalSeconds ?? 0) +
-      (todayMiniSudokuCompletion?.totalSeconds ?? 0) +
-      (todayPatchesCompletion?.totalSeconds ?? 0) +
-      (todayFoldCompletion?.totalSeconds ?? 0)
-    : 0;
+  const completedCount = completedList.length;
+  const allCleared = completedCount === 6;
+
+  const combinedTotalSeconds = useMemo(
+    () =>
+      completedList.reduce(
+        (sum, item) => sum + item.completion.totalSeconds,
+        0
+      ),
+    [completedList]
+  );
 
   const recapPayload = useMemo<DailyRecapSharePayload | null>(() => {
-    if (
-      !todayQueensCompletion ||
-      !todayZipCompletion ||
-      !todayTangoCompletion ||
-      !todayMiniSudokuCompletion ||
-      !todayPatchesCompletion ||
-      !todayFoldCompletion
-    ) {
-      return null;
-    }
+    if (completedList.length === 0) return null;
 
-    const games: DailyRecapSharePayload["games"] = [
-      {
-        game: "queens",
-        totalSeconds: todayQueensCompletion.totalSeconds,
-        hintsUsed: todayQueensCompletion.hintsUsed,
-        difficulty: todayDifficulty,
-      },
-      {
-        game: "zip",
-        totalSeconds: todayZipCompletion.totalSeconds,
-        hintsUsed: todayZipCompletion.hintsUsed,
-        difficulty: todayZipDifficulty,
-      },
-      {
-        game: "tango",
-        totalSeconds: todayTangoCompletion.totalSeconds,
-        hintsUsed: todayTangoCompletion.hintsUsed,
-        difficulty: todayTangoDifficulty,
-      },
-      {
-        game: "mini-sudoku",
-        totalSeconds: todayMiniSudokuCompletion.totalSeconds,
-        hintsUsed: todayMiniSudokuCompletion.hintsUsed,
-        difficulty: todayMiniSudokuDifficulty,
-      },
-      {
-        game: "patches",
-        totalSeconds: todayPatchesCompletion.totalSeconds,
-        hintsUsed: todayPatchesCompletion.hintsUsed,
-        difficulty: todayPatchesDifficulty,
-      },
-      {
-        game: "fold",
-        totalSeconds: todayFoldCompletion.totalSeconds,
-        hintsUsed: todayFoldCompletion.hintsUsed,
-        difficulty: todayFoldDifficulty,
-      },
-    ];
+    const games: DailyRecapSharePayload["games"] = completedList.map(
+      (item) => ({
+        game: item.game,
+        totalSeconds: item.completion.totalSeconds,
+        hintsUsed: item.completion.hintsUsed,
+        difficulty: item.difficulty,
+      })
+    );
 
     const totalHintsUsed = games.reduce((sum, g) => sum + g.hintsUsed, 0);
 
@@ -203,23 +242,34 @@ export function TodayHub({
       games,
     };
   }, [
-    todayQueensCompletion,
-    todayZipCompletion,
-    todayTangoCompletion,
-    todayMiniSudokuCompletion,
-    todayPatchesCompletion,
-    todayFoldCompletion,
-    todayDifficulty,
-    todayZipDifficulty,
-    todayTangoDifficulty,
-    todayMiniSudokuDifficulty,
-    todayPatchesDifficulty,
-    todayFoldDifficulty,
+    completedList,
     todayDateStr,
     combinedTotalSeconds,
     stats.currentStreak,
     username,
   ]);
+
+  // Live top-3 snapshot for the desktop info strip
+  useEffect(() => {
+    let active = true;
+    setRanksLoading(true);
+    fetchOverallDailyLeaderboard(todayDateStr, userId ?? undefined)
+      .then((entries) => {
+        if (active) {
+          setTopRanks(entries.slice(0, 3));
+          setRanksLoading(false);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setTopRanks([]);
+          setRanksLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [todayDateStr, userId, stats.totalSolved, syncVersion]);
 
   // Client-side countdown to midnight (never runs during SSR -> zero hydration mismatch)
   useEffect(() => {
@@ -267,17 +317,21 @@ export function TodayHub({
 
   return (
     <div className="px-5 pt-3 pb-28 lg:px-6 lg:pb-12">
-      {/* Greeting + Date + Streak Pill */}
-      <div className="flex items-start justify-between gap-3">
+      {/* Greeting + Date + Mobile Streak Pill / Desktop Progress & Share Card */}
+      <div className="flex items-start justify-between gap-3 lg:items-center">
         <div>
           <p className="text-[12px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
             {formattedDate}
           </p>
-          <h1 className="font-display mt-1 text-[30px] font-bold leading-tight tracking-tight text-neutral-950 dark:text-white">
+          <h1 className="font-display mt-1 text-[30px] lg:text-[34px] font-bold leading-tight tracking-tight text-neutral-950 dark:text-white">
             {greeting}
           </h1>
+          <p className="mt-1.5 hidden text-[14px] leading-relaxed text-neutral-600 dark:text-neutral-400 lg:block">
+            {t.today.subtitle}
+          </p>
         </div>
 
+        {/* Mobile/Tablet Streak Pill */}
         <div className="glass-pill mt-1 flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 lg:hidden">
           <Flame
             className={`h-4 w-4 ${
@@ -290,9 +344,51 @@ export function TodayHub({
             {stats.currentStreak}
           </span>
         </div>
+
+        {/* Desktop Daily Progress & Share Summary Card (lg+ only) */}
+        <div className="glass-card hidden shrink-0 items-center gap-5 rounded-[22px] px-5 py-3.5 lg:flex">
+          <div className="flex items-center gap-4">
+            <div>
+              <div className="text-[10.5px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                {locale === "id" ? "Progres Hari Ini" : "Daily Progress"}
+              </div>
+              <div className="font-display mt-0.5 flex items-baseline gap-1.5 text-[18px] font-bold tabular-nums text-neutral-950 dark:text-white">
+                <span>{completedCount} / 6</span>
+                <span className="text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
+                  {t.today.completed}
+                </span>
+              </div>
+            </div>
+
+            <div className="h-8 w-px bg-black/[0.07] dark:bg-white/[0.1]" />
+
+            <div>
+              <div className="text-[10.5px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                {t.today.totalTime}
+              </div>
+              <div className="font-display mt-0.5 flex items-center gap-1.5 text-[18px] font-bold tabular-nums text-neutral-950 dark:text-white">
+                <Clock className="h-3.5 w-3.5 text-neutral-400" />
+                {completedCount > 0 ? formatTime(combinedTotalSeconds) : "—"}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            disabled={completedCount === 0}
+            onClick={() => {
+              feedback.pop();
+              setRecapShareOpen(true);
+            }}
+            className="flex items-center gap-1.5 rounded-xl bg-[#0369A1] px-3.5 py-2 text-[12.5px] font-semibold text-white shadow-[0_4px_12px_-3px_rgba(3,105,161,0.3)] transition-all hover:bg-[#075985] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 dark:bg-sky-400/90 dark:text-neutral-950 dark:hover:bg-sky-300"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            <span>{locale === "id" ? "Bagikan Skor" : "Share Scorecard"}</span>
+          </button>
+        </div>
       </div>
 
-      <p className="mt-2 text-[13.5px] leading-relaxed text-neutral-600 dark:text-neutral-400">
+      <p className="mt-2 text-[13.5px] leading-relaxed text-neutral-600 dark:text-neutral-400 lg:hidden">
         {t.today.subtitle}
       </p>
 
@@ -398,7 +494,7 @@ export function TodayHub({
       </div>
 
       {/* Active Daily Games: 1-col on mobile/tablet, 3×2 grid on desktop (lg+) */}
-      <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-3 lg:gap-4">
+      <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-3 lg:gap-5">
         {/* Game #1: Queens */}
         <motion.button
           type="button"
@@ -407,7 +503,7 @@ export function TodayHub({
             feedback.pop();
             onPlayDailyQueens();
           }}
-          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-amber-600/[0.18] bg-gradient-to-br from-amber-500/[0.05] via-white/75 to-white/65 p-5 text-left transition-all hover:-translate-y-0.5 hover:border-amber-600/35 hover:shadow-[0_10px_24px_-8px_rgba(180,83,9,0.14)] dark:border-amber-400/[0.16] dark:from-amber-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-amber-400/30"
+          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-amber-600/[0.18] bg-gradient-to-br from-amber-500/[0.05] via-white/75 to-white/65 p-5 lg:p-6 text-left transition-all hover:-translate-y-0.5 hover:border-amber-600/35 hover:shadow-[0_10px_24px_-8px_rgba(180,83,9,0.14)] dark:border-amber-400/[0.16] dark:from-amber-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-amber-400/30"
         >
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-amber-500/[0.12] text-amber-700 border border-amber-600/20 shadow-xs dark:bg-amber-400/15 dark:text-amber-300 dark:border-amber-400/20">
@@ -459,7 +555,7 @@ export function TodayHub({
             feedback.pop();
             onPlayDailyZip();
           }}
-          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-sky-600/[0.18] bg-gradient-to-br from-sky-500/[0.05] via-white/75 to-white/65 p-5 text-left transition-all hover:-translate-y-0.5 hover:border-sky-600/35 hover:shadow-[0_10px_24px_-8px_rgba(3,105,161,0.14)] dark:border-sky-400/[0.16] dark:from-sky-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-sky-400/30"
+          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-sky-600/[0.18] bg-gradient-to-br from-sky-500/[0.05] via-white/75 to-white/65 p-5 lg:p-6 text-left transition-all hover:-translate-y-0.5 hover:border-sky-600/35 hover:shadow-[0_10px_24px_-8px_rgba(3,105,161,0.14)] dark:border-sky-400/[0.16] dark:from-sky-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-sky-400/30"
         >
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-sky-500/[0.12] text-sky-700 border border-sky-600/20 shadow-xs dark:bg-sky-400/15 dark:text-sky-300 dark:border-sky-400/20">
@@ -511,7 +607,7 @@ export function TodayHub({
             feedback.pop();
             onPlayDailyTango();
           }}
-          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-orange-600/[0.18] bg-gradient-to-br from-orange-500/[0.05] via-white/75 to-white/65 p-5 text-left transition-all hover:-translate-y-0.5 hover:border-orange-600/35 hover:shadow-[0_10px_24px_-8px_rgba(234,88,12,0.14)] dark:border-orange-400/[0.16] dark:from-orange-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-orange-400/30"
+          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-orange-600/[0.18] bg-gradient-to-br from-orange-500/[0.05] via-white/75 to-white/65 p-5 lg:p-6 text-left transition-all hover:-translate-y-0.5 hover:border-orange-600/35 hover:shadow-[0_10px_24px_-8px_rgba(234,88,12,0.14)] dark:border-orange-400/[0.16] dark:from-orange-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-orange-400/30"
         >
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-orange-500/[0.12] text-orange-700 border border-orange-600/20 shadow-xs dark:bg-orange-400/15 dark:text-orange-300 dark:border-orange-400/20">
@@ -563,7 +659,7 @@ export function TodayHub({
             feedback.pop();
             onPlayDailyMiniSudoku();
           }}
-          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-emerald-600/[0.18] bg-gradient-to-br from-emerald-500/[0.05] via-white/75 to-white/65 p-5 text-left transition-all hover:-translate-y-0.5 hover:border-emerald-600/35 hover:shadow-[0_10px_24px_-8px_rgba(5,150,105,0.14)] dark:border-emerald-400/[0.16] dark:from-emerald-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-emerald-400/30"
+          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-emerald-600/[0.18] bg-gradient-to-br from-emerald-500/[0.05] via-white/75 to-white/65 p-5 lg:p-6 text-left transition-all hover:-translate-y-0.5 hover:border-emerald-600/35 hover:shadow-[0_10px_24px_-8px_rgba(5,150,105,0.14)] dark:border-emerald-400/[0.16] dark:from-emerald-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-emerald-400/30"
         >
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-emerald-500/[0.12] text-emerald-700 border border-emerald-600/20 shadow-xs dark:bg-emerald-400/15 dark:text-emerald-300 dark:border-emerald-400/20">
@@ -615,7 +711,7 @@ export function TodayHub({
             feedback.pop();
             onPlayDailyPatches();
           }}
-          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-rose-600/[0.18] bg-gradient-to-br from-rose-500/[0.05] via-white/75 to-white/65 p-5 text-left transition-all hover:-translate-y-0.5 hover:border-rose-600/35 hover:shadow-[0_10px_24px_-8px_rgba(225,29,72,0.14)] dark:border-rose-400/[0.16] dark:from-rose-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-rose-400/30"
+          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-rose-600/[0.18] bg-gradient-to-br from-rose-500/[0.05] via-white/75 to-white/65 p-5 lg:p-6 text-left transition-all hover:-translate-y-0.5 hover:border-rose-600/35 hover:shadow-[0_10px_24px_-8px_rgba(225,29,72,0.14)] dark:border-rose-400/[0.16] dark:from-rose-500/[0.08] dark:via-neutral-900/60 dark:to-neutral-900/55 dark:hover:border-rose-400/30"
         >
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-rose-500/[0.12] text-rose-700 border border-rose-600/20 shadow-xs dark:bg-rose-400/15 dark:text-rose-300 dark:border-rose-400/20">
@@ -667,7 +763,7 @@ export function TodayHub({
             feedback.pop();
             onPlayDailyFold();
           }}
-          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-indigo-600/[0.18] bg-gradient-to-br from-indigo-500/[0.06] via-white/75 to-violet-500/[0.04] p-5 text-left transition-all hover:-translate-y-0.5 hover:border-indigo-600/35 hover:shadow-[0_10px_24px_-8px_rgba(79,70,229,0.14)] dark:border-indigo-400/[0.16] dark:from-indigo-500/[0.09] dark:via-neutral-900/60 dark:to-violet-500/[0.07] dark:hover:border-indigo-400/30"
+          className="glass-card group relative flex h-full w-full flex-col justify-between gap-4 overflow-hidden rounded-[26px] border-indigo-600/[0.18] bg-gradient-to-br from-indigo-500/[0.06] via-white/75 to-violet-500/[0.04] p-5 lg:p-6 text-left transition-all hover:-translate-y-0.5 hover:border-indigo-600/35 hover:shadow-[0_10px_24px_-8px_rgba(79,70,229,0.14)] dark:border-indigo-400/[0.16] dark:from-indigo-500/[0.09] dark:via-neutral-900/60 dark:to-violet-500/[0.07] dark:hover:border-indigo-400/30"
         >
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-indigo-500/[0.12] text-indigo-700 border border-indigo-600/20 shadow-xs dark:bg-indigo-400/15 dark:text-indigo-300 dark:border-indigo-400/20">
@@ -710,6 +806,168 @@ export function TodayHub({
             </span>
           </div>
         </motion.button>
+      </div>
+
+      {/* Desktop 3-Column Info Strip (lg+ only) */}
+      <div className="mt-6 hidden lg:grid lg:grid-cols-3 lg:gap-5">
+        {/* Card 1 — Today's Top Ranks */}
+        <div className="glass-card flex flex-col justify-between rounded-[24px] p-5">
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/[0.12] text-amber-600 dark:bg-amber-400/15 dark:text-amber-300">
+                  <Trophy className="h-4 w-4" />
+                </div>
+                <h3 className="font-display text-[15px] font-bold text-neutral-950 dark:text-white">
+                  {locale === "id" ? "Peringkat Teratas Hari Ini" : "Today's Top Ranks"}
+                </h3>
+              </div>
+              <span className="tabular-nums text-[11px] font-medium text-neutral-400">
+                {todayDateStr}
+              </span>
+            </div>
+
+            <div className="mt-3.5 space-y-2">
+              {ranksLoading ? (
+                <p className="py-4 text-center text-[12px] text-neutral-400">
+                  {t.leaderboard.loading}
+                </p>
+              ) : topRanks.length === 0 ? (
+                <p className="py-4 text-[12.5px] leading-relaxed text-neutral-500 dark:text-neutral-400">
+                  {t.leaderboard.emptyBoardOverall}
+                </p>
+              ) : (
+                topRanks.map((entry, idx) => (
+                  <div
+                    key={entry.id}
+                    className={`flex items-center justify-between rounded-xl px-3 py-2 text-[12.5px] ${
+                      entry.isCurrentUser
+                        ? "bg-sky-500/[0.1] font-semibold text-sky-950 dark:bg-sky-400/[0.12] dark:text-sky-100"
+                        : "bg-black/[0.03] text-neutral-800 dark:bg-white/[0.04] dark:text-neutral-200"
+                    }`}
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center text-[11px] font-bold">
+                        {idx === 0 ? (
+                          <Medal className="h-4 w-4 text-amber-500" />
+                        ) : idx === 1 ? (
+                          <Medal className="h-4 w-4 text-slate-400" />
+                        ) : (
+                          <Medal className="h-4 w-4 text-amber-700 dark:text-amber-600" />
+                        )}
+                      </span>
+                      <span className="truncate font-medium">
+                        @{entry.displayName}
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2 tabular-nums text-[11.5px] text-neutral-500 dark:text-neutral-400">
+                      <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                        {entry.gamesSolved ?? 1}/6
+                      </span>
+                      <span>{formatTime(entry.totalSeconds)}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              feedback.click();
+              onGoToRanks();
+            }}
+            className="mt-4 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-sky-700 transition-colors hover:text-sky-900 dark:text-sky-300 dark:hover:text-sky-200"
+          >
+            <span>
+              {locale === "id" ? "Lihat Semua Peringkat" : "View Full Ranks"}
+            </span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        {/* Card 2 — Quick Practice */}
+        <div className="glass-card flex flex-col justify-between rounded-[24px] p-5">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-500/[0.12] text-sky-700 dark:bg-sky-400/15 dark:text-sky-300">
+                <InfinityIcon className="h-4 w-4" />
+              </div>
+              <h3 className="font-display text-[15px] font-bold text-neutral-950 dark:text-white">
+                {locale === "id" ? "Latihan Cepat" : "Quick Practice"}
+              </h3>
+            </div>
+            <p className="mt-2.5 text-[13px] leading-relaxed text-neutral-600 dark:text-neutral-400">
+              {locale === "id"
+                ? "Langsung main puzzle acak dari 6 game Pola tanpa memengaruhi streak harianmu."
+                : "Jump straight into a random puzzle across all 6 games with zero pressure on your daily streak."}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              feedback.pop();
+              onPlayRandomUnlimited();
+            }}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0369A1] py-2.5 text-[13px] font-semibold text-white shadow-[0_4px_14px_-4px_rgba(3,105,161,0.3)] transition-all hover:bg-[#075985] active:scale-[0.98] dark:bg-sky-400/90 dark:text-neutral-950 dark:hover:bg-sky-300"
+          >
+            <Shuffle className="h-4 w-4" />
+            <span>
+              {locale === "id"
+                ? "Main Acak Tanpa Batas"
+                : "Play Random Unlimited"}
+            </span>
+          </button>
+        </div>
+
+        {/* Card 3 — Desktop Controls */}
+        <div className="glass-card flex flex-col justify-between rounded-[24px] p-5">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/[0.12] text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300">
+                <Keyboard className="h-4 w-4" />
+              </div>
+              <h3 className="font-display text-[15px] font-bold text-neutral-950 dark:text-white">
+                {locale === "id" ? "Kontrol Desktop" : "Desktop Controls"}
+              </h3>
+            </div>
+
+            <div className="mt-3.5 space-y-2 text-[12.5px] text-neutral-600 dark:text-neutral-300">
+              <div className="flex items-center justify-between gap-2">
+                <span>
+                  {locale === "id" ? "Isi angka Mini Sudoku" : "Mini Sudoku digits"}
+                </span>
+                <kbd className="rounded-lg border border-black/[0.1] bg-black/[0.04] px-2 py-0.5 font-mono text-[11px] font-semibold text-neutral-800 dark:border-white/[0.14] dark:bg-white/[0.07] dark:text-neutral-100">
+                  1–6
+                </kbd>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span>
+                  {locale === "id" ? "Hapus kotak terpilih" : "Clear selected cell"}
+                </span>
+                <kbd className="rounded-lg border border-black/[0.1] bg-black/[0.04] px-2 py-0.5 font-mono text-[11px] font-semibold text-neutral-800 dark:border-white/[0.14] dark:bg-white/[0.07] dark:text-neutral-100">
+                  Backspace
+                </kbd>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span>{locale === "id" ? "Batalkan langkah" : "Undo last move"}</span>
+                <kbd className="rounded-lg border border-black/[0.1] bg-black/[0.04] px-2 py-0.5 font-mono text-[11px] font-semibold text-neutral-800 dark:border-white/[0.14] dark:bg-white/[0.07] dark:text-neutral-100">
+                  Z
+                </kbd>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span>
+                  {locale === "id" ? "Tarik jalur & area" : "Draw paths & marks"}
+                </span>
+                <kbd className="rounded-lg border border-black/[0.1] bg-black/[0.04] px-2 py-0.5 font-mono text-[11px] font-semibold text-neutral-800 dark:border-white/[0.14] dark:bg-white/[0.07] dark:text-neutral-100">
+                  Click & Drag
+                </kbd>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {recapPayload && (

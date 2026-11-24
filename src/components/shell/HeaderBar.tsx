@@ -66,8 +66,8 @@ export function HeaderBar({
 
   return (
     <>
-      <header className="relative z-10 mx-auto flex h-auto w-full max-w-5xl items-center justify-between gap-2 px-4 sm:px-5 lg:px-6 pt-[calc(env(safe-area-inset-top)+1rem)] pb-3 lg:py-4">
-        <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
+      <header className="relative z-10 mx-auto flex h-auto w-full max-w-6xl items-center justify-between gap-2 px-4 sm:px-5 pt-[calc(env(safe-area-inset-top)+1rem)] pb-3 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:items-center lg:px-6 lg:py-4">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-2.5 lg:justify-self-start">
           {/* Signature 4-tile Pola squircle glass badge */}
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-white/85 border border-white/90 shadow-[0_4px_14px_-3px_rgba(14,165,233,0.22),inset_0_1px_0_0_rgba(255,255,255,0.95)] dark:bg-white/[0.09] dark:border-white/[0.15] dark:shadow-[0_4px_14px_-3px_rgba(0,0,0,0.5)]">
             <div className="grid grid-cols-2 gap-[3px] p-1.5">
@@ -83,11 +83,11 @@ export function HeaderBar({
           </span>
         </div>
 
-        {/* Desktop-only Top Navigation Bar (lg+) */}
-        {activeTab && onSelectTab && (
+        {/* Desktop-only Top Navigation Bar (lg+) — mathematically centered */}
+        {activeTab && onSelectTab ? (
           <nav
             aria-label="Primary Navigation"
-            className="glass-pill hidden items-center gap-1 rounded-full p-1 lg:flex"
+            className="glass-pill hidden items-center gap-1 rounded-full p-1 lg:flex lg:justify-self-center"
           >
             {navItems.map((item) => {
               const isActive = activeTab === item.id;
@@ -127,9 +127,11 @@ export function HeaderBar({
               );
             })}
           </nav>
+        ) : (
+          <div className="hidden lg:block" />
         )}
 
-        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5 lg:justify-self-end">
           {/* Desktop Streak Pill */}
           <div
             aria-label={`${streak} ${t.today.streak}`}
